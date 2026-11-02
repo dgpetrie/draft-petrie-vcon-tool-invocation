@@ -1,0 +1,144 @@
+; CDDL for the tool-invocation vCon extension
+; (draft-petrie-vcon-tool-invocation).
+; The prose of the draft is normative.
+; This CDDL is informative.
+; Constraints that cannot be expressed in CDDL are stated in
+; comments.
+;
+; This CDDL is used together with the core vCon CDDL
+; (draft-ietf-vcon-vcon-core, syntax version 0.5.0).
+; It adds Event Object types through the event-type-ext socket of
+; the core CDDL, and uses no other core socket.
+; It uses these rules of the core CDDL: date_type,
+; session_index_or_list_type, party_index_type,
+; attachment_index_or_list_type, media_type_value_type and
+; file_content_type.
+;
+; Each Event Object type defined here ends with a socket of its
+; own, so that another vCon extension can add parameters to it.
+; A policy decision for another kind of operation is added by
+; another vCon extension, as a group of its own with the type
+; "policy-decision" and its own operation value, through the
+; event-type-ext socket.
+;
+; Not enforced by this CDDL:
+; - A vCon which contains these Event Object types SHOULD list
+;   "tool-invocation" in its extensions parameter.
+; - operation_id MUST be unique among the operations in the vCon,
+;   and all of the Event Objects of an operation, across all of
+;   its attempts, MUST have the same operation_id.
+; - Each later attempt of an operation is one more than the
+;   attempt before it.
+; - mediatype MUST be present for inline content.
+
+$$event-type-ext //= ( event_policy_decision_once_type )
+$$event-type-ext //= ( event_policy_decision_standing_type )
+$$event-type-ext //= ( event_tool_invocation_type )
+$$event-type-ext //= ( event_tool_response_type )
+
+; Parameters common to the Event Object types of this extension
+; party references the agent, also in the Event Objects for
+; policy decisions and for responses from the tool.
+event_ti_common_type = (
+    "time": date_type,
+    sessions: session_index_or_list_type,
+    party: party_index_type
+  )
+
+; Policy decision event type
+policy_decision_value_type = "allowed" / "permission-required" /
+    "disallowed"
+
+; Parameters common to the policy-decision type
+policy_decision_common_type = (
+    type: "policy-decision",
+    event_ti_common_type,
+    decision: policy_decision_value_type,
+    ? reason: tstr
+  )
+
+; A decision for one tool invocation
+event_policy_decision_once_type = (
+    policy_decision_common_type,
+    operation: "tool-invocation",
+    policy_life: "once",
+    operation_id: tstr,
+    attempt: attempt_value_type,
+    tool_identity_type,
+    * $$event-policy-decision-ext
+  )
+
+; A standing decision for one tool, or for all of the tools of a
+; server when tool is absent
+; Not enforced by this CDDL:
+; - A standing decision applies until a later policy-decision type
+;   Event Object for the same operation and target replaces it, or
+;   until the end of the vCon.
+event_policy_decision_standing_type = (
+    policy_decision_common_type,
+    operation: "tool-invocation",
+    policy_life: "standing",
+    server: server_value_type,
+    ? tool: tstr,
+    * $$event-policy-decision-ext
+  )
+
+; The server and the tool together identify a tool.
+tool_identity_type = (
+    server: server_value_type,
+    tool: tstr
+  )
+
+; The URL of the server when it has one, otherwise the name of the
+; server, or "!host" for a tool provided by the host.
+; Not enforced by this CDDL:
+; - A server name MUST NOT start with "!".
+server_value_type = tstr
+
+; Parameters common to the tool event types
+event_tool_common_type = (
+    event_ti_common_type,
+    operation_id: tstr,
+    attempt: attempt_value_type
+  )
+
+; Content of a tool event type, inline or externally referenced
+; as for Dialog Content in the core CDDL.
+; Not enforced by this CDDL:
+; - Content SHOULD be present in the tool event types, other than
+;   tool-pending, tool-timeout and tool-cancel, in which it is
+;   optional (see Event Object Parameter Applicability by Type).
+event_tool_content_type = (
+    ? mediatype: media_type_value_type,
+    file_content_type
+  )
+
+; Tool invocation event type
+; The content is the arguments sent to the tool.
+event_tool_invocation_type = (
+    type: "tool-invocation",
+    event_tool_common_type,
+    tool_identity_type,
+    ? event_tool_content_type,
+    ? attachment: attachment_index_or_list_type,
+    * $$event-tool-invocation-ext
+  )
+
+; Event types for the responses from the tool, and for the input,
+; timeout and cancellation of the agent
+; Not enforced by this CDDL:
+; - tool-denied is used only when the response from the tool is
+;   identified by the protocol as a denial.
+event_tool_response_type = (
+    type: "tool-pending" / "tool-progress" / "tool-input" /
+      "tool-input-response" / "tool-result" / "tool-failure" /
+      "tool-error" / "tool-denied" / "tool-timeout" /
+      "tool-cancel",
+    event_tool_common_type,
+    ? event_tool_content_type,
+    ? attachment: attachment_index_or_list_type,
+    * $$event-tool-ext
+  )
+
+; The first attempt of an operation is 1.
+attempt_value_type = uint .ge 1

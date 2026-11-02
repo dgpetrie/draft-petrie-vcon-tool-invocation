@@ -1,0 +1,402 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://ietf.org/vcon/schemas/tool-invocation-extension
+    .json",
+  "title": "vCon Tool Invocation (tool-invocation) Extension",
+  "description": "Supplemental JSON schema for the Event Object t
+    ypes and parameters defined by the vCon tool-invocation exten
+    sion, RFCXXXX. This schema is applied in addition to the core
+     vCon schema; it constrains only the Event Object types and p
+    arameters added by this extension and leaves all other parame
+    ters to the core schema. The text of this document is normati
+    ve; this schema is informational.",
+  "type": "object",
+  "properties": {
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/EventToolInvocationExtension"
+      }
+    }
+  },
+  "definitions": {
+    "EventToolInvocationExtension": {
+      "type": "object",
+      "description": "Event Object types and parameters added to 
+        the core Event Object by the tool-invocation extension",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "policy-decision, tool-invocation, tool-
+            pending, tool-progress, tool-input, tool-input-respon
+            se, tool-result, tool-failure, tool-error, tool-denie
+            d, tool-timeout or tool-cancel, in addition to the co
+            re Event Object types"
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "allowed",
+            "permission-required",
+            "disallowed"
+          ],
+          "description": "Outcome of a policy decision (policy-de
+            cision only)"
+        },
+        "policy_life": {
+          "type": "string",
+          "enum": [
+            "once",
+            "standing"
+          ],
+          "description": "Whether a policy decision applies to on
+            e operation only or is standing (policy-decision only
+            )"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Reason for a policy decision (policy-de
+            cision only)"
+        },
+        "operation": {
+          "type": "string",
+          "description": "Kind of operation to which a policy dec
+            ision applies; this document defines tool-invocation 
+            (policy-decision only)"
+        },
+        "operation_id": {
+          "type": "string",
+          "description": "Identifier of the operation; the same f
+            or all Event Objects of an operation, across all of i
+            ts attempts; not present in standing policy decisions
+            "
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Attempt of the operation, starting at 1
+            ; not present in standing policy decisions"
+        },
+        "server": {
+          "type": "string",
+          "description": "URL of the server which provides the to
+            ol, otherwise its name, or !host for a tool provided 
+            by the host (policy-decision and tool-invocation only
+            )"
+        },
+        "tool": {
+          "type": "string",
+          "description": "Name of the tool as known to the server
+             (policy-decision and tool-invocation only); absent i
+            n a standing policy decision for all of the tools of 
+            the server"
+        },
+        "mediatype": {
+          "type": "string",
+          "description": "Media type of the content of a tool eve
+            nt type; MUST be present for inline content"
+        },
+        "encoding": {
+          "type": "string",
+          "description": "Encoding of the inline content of a too
+            l event type: json, none or base64url"
+        },
+        "body": {
+          "description": "Inline content of a tool event type; an
+            y JSON value when encoding is json, otherwise a strin
+            g"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL of the externally referenced conten
+            t of a tool event type"
+        },
+        "content_hash": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-z0-9]+-[A-Za-z0-9_-]+$"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+-[A-Za-z0-9_-]+$"
+              }
+            }
+          ],
+          "description": "Hash of the externally referenced conte
+            nt of a tool event type"
+        },
+        "attachment": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          ],
+          "description": "Index or indices of the Attachment Obje
+            cts passed to or returned by the tool (tool event typ
+            es only)"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "policy-decision"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "sessions",
+              "party",
+              "decision",
+              "policy_life",
+              "operation",
+              "server"
+            ],
+            "allOf": [
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "mediatype"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "encoding"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "body"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "url"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "content_hash"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "attachment"
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "policy_life": {
+                      "const": "once"
+                    }
+                  },
+                  "required": [
+                    "policy_life"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "operation_id",
+                    "attempt",
+                    "tool"
+                  ]
+                },
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": [
+                          "operation_id"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "attempt"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "tool-invocation",
+                  "tool-pending",
+                  "tool-progress",
+                  "tool-input",
+                  "tool-input-response",
+                  "tool-result",
+                  "tool-failure",
+                  "tool-error",
+                  "tool-denied",
+                  "tool-timeout",
+                  "tool-cancel"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "sessions",
+              "party",
+              "operation_id",
+              "attempt"
+            ],
+            "allOf": [
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "decision"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "policy_life"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "reason"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "operation"
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "body": {}
+                  },
+                  "required": [
+                    "body"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "encoding"
+                  ],
+                  "not": {
+                    "required": [
+                      "url"
+                    ]
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "url"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "content_hash"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "tool-invocation"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "server",
+              "tool"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "tool-pending",
+                  "tool-progress",
+                  "tool-input",
+                  "tool-input-response",
+                  "tool-result",
+                  "tool-failure",
+                  "tool-error",
+                  "tool-denied",
+                  "tool-timeout",
+                  "tool-cancel"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "server"
+                  ]
+                },
+                {
+                  "required": [
+                    "tool"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,16 @@
+                     policy-decision
+                            |
+      +---------------------+----------------------+
+      | allowed             | permission-required  | disallowed
+      v                     v                      v
+ +---------+     +---------------------+     +------------+
+ | Allowed |     | Permission Required |     | Disallowed |
+ +---------+     +---------------------+     +------------+
+      |                     | (1)
+      +---------------------+
+                            v
+                operation is performed
+                (e.g. tool-invocation)
+
+  (1) permission granted (see Requirements for Permission and
+      Directive Events)
