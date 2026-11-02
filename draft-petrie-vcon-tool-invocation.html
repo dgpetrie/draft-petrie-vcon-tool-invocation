@@ -1,0 +1,3531 @@
+<!DOCTYPE html>
+<html lang="en" class="Internet-Draft">
+<head>
+<meta charset="utf-8">
+<meta content="Common,Latin" name="scripts">
+<meta content="initial-scale=1.0" name="viewport">
+<title>The JSON vCon - Tool Invocation Extension</title>
+<meta content="Daniel G Petrie" name="author">
+<meta content="
+       A vCon is a container for data and information relating to a conversation.
+This document defines an extension to the JSON vCon schema for recording the policy decisions of AI agents and their invocation of tools.
+Before an agent performs an operation, the agent or its host uses policy to decide whether the operation is allowed, disallowed or requires permission.
+This document defines an Event Object type for those decisions, and Event Object types for each step of a tool invocation.
+It also outlines requirements for recording requests for permission and direction, which need to be defined in a future document. 
+    " name="description">
+<meta content="xml2rfc 3.34.1" name="generator">
+<meta content="vcon" name="keyword">
+<meta content="conversation" name="keyword">
+<meta content="AI agent" name="keyword">
+<meta content="tool invocation" name="keyword">
+<meta content="MCP" name="keyword">
+<meta content="agentproto" name="keyword">
+<meta content="AUDIT" name="keyword">
+<meta content="draft-petrie-vcon-tool-invocation-latest" name="ietf.draft">
+<!-- Generator version information:
+  xml2rfc 3.34.1
+    Python 3.14.8
+    ConfigArgParse 1.8.0
+    google-i18n-address 3.1.1
+    intervaltree 3.2.1
+    Jinja2 3.1.6
+    lxml 6.1.1
+    natsort 8.4.0
+    platformdirs 4.13.4
+    pycountry 24.6.1
+    PyYAML 6.0.3
+    requests 2.33.1
+    wcwidth 0.9.2
+-->
+<link href="draft-petrie-vcon-tool-invocation.xml" rel="alternate" type="application/rfc+xml">
+<link href="#copyright" rel="license">
+<style type="text/css">@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Lora SemiBold'), local('Lora-SemiBold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-semibold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  color-scheme: light dark;
+  --background-color: #fff;
+  --text-color: #222;
+  --title-color: #191919;
+  --link-color: #2a6496;
+  --highlight-color: #f9f9f9;
+  --line-color: #eee;
+  --pilcrow-weak: #ddd;
+  --pilcrow-strong: #bbb;
+  --small-font-size: 14.5px;
+  --font-mono: 'Oxygen Mono', monospace;
+  --font-title: "Sofia Sans Semi Condensed", sans-serif;
+  scrollbar-color: #bbb #eee;
+}
+body {
+  max-width: 600px;
+  margin: 75px auto;
+  padding: 0 5px;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  font: 16px/22px "Lora", serif;
+  scroll-behavior: smooth;
+}
+
+.ears {
+  display: none;
+}
+
+/* headings */
+section {
+  clear: both;
+}
+.section-number {
+  padding-right: 0.5em;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-title);
+  font-weight: 680;
+  margin: 0.8em 0 0.3em;
+  font-size-adjust: 0.5;
+  color: var(--title-color);
+}
+h1 {
+  &#title {
+    font-size: 32px;
+    line-height: 40px;
+    clear: both;
+    margin: 1.5em 0 0.2em;
+  }
+  &#rfcnum {
+    margin: 1.5em 0 0.2em;
+    & + h1#title {
+      margin: 0.2em 0;
+    }
+  }
+}
+
+h1, h2, h3 {
+  font-size: 22px;
+  line-height: 27px;
+}
+h4, h5, h6 {
+  font-size: 20px;
+  line-height: 24px;
+}
+
+/* general structure */
+.author {
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+#abstract+p {
+  font-size: 18px;
+  line-height: 24px;
+  & code, & samp, & tt {
+    font-size: 16px;
+    line-height: 0;
+  }
+}
+
+p {
+  padding: 0;
+  margin: 0.5em 0;
+  text-align: left;
+}
+div {
+  margin: 0;
+}
+.alignRight {
+  margin: 1em 0;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    margin: 0;
+    float: right;
+    clear: both;
+  }
+  & > *:nth-child(2) {
+    clear: both;
+    display: block;
+    border: none;
+  }
+}
+svg {
+  display: block;
+  /* font-family isn't space-separated, but =~ will have to do */
+  &[font-family~="monospace" i], & [font-family~="monospace" i] {
+    font-family: var(--font-mono);
+  }
+}
+.alignCenter {
+  margin: 1em 0;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
+       support flexbox yet.
+    */
+    display: table;
+    margin: 0 auto;
+  }
+}
+
+/* lists */
+ol, ul {
+  padding: 0;
+  margin: 0 0 0.5em 2em;
+  & :is(ol, ul) {
+    margin-left: 1em;
+  }
+}
+li {
+  margin: 0 0 0.25em 0;
+}
+ul.empty, .ulEmpty {
+  list-style-type: none;
+  & li {
+    margin-top: 0.5em;
+  }
+}
+:is(ul, ol).compact, .ulCompact, .olCompact {
+  margin: 0 0 0 2em;
+  & li {
+    margin: 0;
+    & :first-child { margin-top: 0; }
+    & :last-child { margin-bottom: 0; }
+  }
+}
+
+/* definition lists */
+dl {
+  clear: left;
+  --indent: 3ch;
+  /* --indent: attr(indent ch); not supported in any browser, but we can dream */
+  &.olPercent {
+    --indent: 5ch;
+    & > dt {
+      min-width: calc(var(--indent) - 2ch);
+      float: none;
+    }
+  }
+
+  dl > dd > & {
+    margin-top: 0.5em;
+    margin-bottom: 0;
+  }
+
+  &:not(.dlNewline) > dt {
+    float: left;
+    margin-right: 2ch;
+    min-width: 8ch;
+  }
+  & > dd {
+    margin-bottom: .8em;
+    margin-left: var(--indent) !important; /* stupid element overrides */
+    min-height: 2ex;
+  }
+}
+:is(dl.compact, .dlCompact) > dd {
+  margin-bottom: 0;
+  & > :is(:first-child, .break:first-child + *) {
+    margin-top: 0;
+  }
+  & > :is(:last-child) {
+    margin-bottom: 0;
+  }
+}
+:is(dd, span).break {
+  display: none;
+}
+
+/* links */
+a {
+  text-decoration: none;
+  &[href] {
+    color: var(--link-color);
+    &:hover { text-decoration: underline; }
+    &.selfRef {
+      color: var(--text-color);
+      &:hover {
+        text-decoration: none;
+        background-color: var(--highlight-color);
+      }
+    }
+  }
+}
+.iref + a[href].internal {
+  color: var(--text-color);
+}
+a.xref:is(.cite, .auto), :is(#status-of-memo, #copyright) a {
+  white-space: nowrap;
+}
+
+/* Figures */
+tt, code, pre {
+  background-color: var(--highlight-color);
+  font: 14px/22px var(--font-mono);
+}
+tt, code {
+  /* changing the font for inline elements leads to different ascender
+     and descender heights; as we want to retain baseline alignment,
+     remove leading to avoid altering the final height of lines
+     note: this fails if these blocks take an entire line,
+     a different solution would be great */
+  line-height: 0;
+}
+:is(h1, h2, h3, h4, h5, h6) :is(tt, code) {
+  font-size: 84%;
+}
+pre {
+  border: 1px solid var(--line-color);
+  font-size: 13.5px;
+  line-height: 16px;
+  letter-spacing: -0.2px;
+  margin: 5px;
+  padding: 5px;
+}
+img {
+  max-width: 100%;
+}
+figure {
+  margin: 0.5em 0;
+  padding: 0;
+  & blockquote {
+    margin: 0.8em 0.4em 0.4em;
+  }
+}
+figcaption, caption {
+  font-style: italic;
+  margin: 0.5em 1.5em;
+  text-align: left;
+  caption-side: bottom;
+}
+@media screen {
+  /* Auto-collapse boilerplate. */
+  :is(#status-of-memo, #copyright) {
+    & p {
+      margin: -2px 0;
+      max-height: 0;
+      transition: max-height 2s ease, margin 0.5s ease 0.5s;
+      overflow: hidden;
+    }
+    &:hover p,
+    & h2:target ~ p {
+      margin: 0.5em 0;
+      max-height: 500px;
+      overflow: auto;
+    }
+  }
+  pre, svg {
+    display: inline-block;
+    /* In the horizontal direction, sometimes people make over-sized figures.
+       Scrollbars for those is therefore necessary: auto adds them as necessary..
+       In the vertical direction, the line-height can combine with the font
+       asender/descender height to produce scrollbars: hidden avoids that. */
+    overflow: auto hidden;
+  }
+  pre {
+    max-width: 100%;
+    width: calc(100% - 22px - 1em);
+  }
+  svg {
+    max-width: calc(100% - 22px - 1em);
+  }
+  figure pre {
+    display: block;
+    width: calc(100% - 25px);
+  }
+  :is(pre, svg) + .pilcrow {
+    display: inline-block;
+    vertical-align: text-bottom;
+    padding-bottom: 8px;
+  }
+}
+
+/* aside, blockquote */
+aside, blockquote {
+  margin-left: 0;
+  padding: 0 2em;
+  font-style: italic;
+}
+blockquote {
+  margin: 1em 0;
+  border-left: 2px var(--pilcrow-strong) solid;
+}
+cite {
+  display: block;
+  text-align: right;
+  font-style: italic;
+}
+
+/* tables */
+table {
+  width: auto;
+  max-width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+  &.right { margin-left: auto; }
+  &.center { margin-left: auto; margin-right: auto; }
+  &.left { margin-right: auto; }
+  & .text-left { text-align: left; }
+  & .text-center { text-align: center; }
+  & .text-right { text-align: right; }
+  & caption {
+    margin: 0;
+    padding: 3px 0 3px 1em;
+  }
+  & p { margin: 0; }
+}
+
+thead, tbody {
+  border: 1px solid var(--line-color);
+}
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 5px 10px;
+}
+th {
+  background-color: var(--line-color);
+}
+:is(tr:nth-child(2n), thead+tbody > tr:nth-child(2n+1)) > td {
+  background-color: var(--background-color);
+}
+:is(tr:nth-child(2n+1), thead+tbody > tr:nth-child(2n)) > td {
+  background-color: var(--highlight-color);
+}
+
+/* pilcrow */
+a.pilcrow {
+  margin-left: 3px;
+  opacity: 0.2;
+  user-select: none;
+  &[href] {
+    color: var(--pilcrow-weak);
+    &:hover { text-decoration: none; }
+  }
+  @media not print {
+    :hover > &, &:focus {
+      opacity: 1;
+    }
+    &[href]:hover {
+      color: var(--pilcrow-strong);
+      background-color: transparent;
+    }
+  }
+  @media print {
+    display: none;
+  }
+}
+
+/* misc */
+hr {
+  border: 0;
+  border-top: 1px solid var(--line-color);
+}
+.bcp14 {
+  font-variant: small-caps;
+  font-weight: 600;
+  font-size: var(--small-font-size);
+}
+.role {
+  font-variant: all-small-caps;
+}
+sub, sup {
+  line-height: 1;
+  font-size: 80%;
+}
+
+/* info block */
+#identifiers {
+  margin: 0;
+  font-size: var(--small-font-size);
+  line-height: 18px;
+  --identifier-width: 15ch;
+  & dt {
+    width: var(--identifier-width);
+    min-width: var(--identifier-width);
+    clear: left;
+    float: left;
+    text-align: right;
+    margin-right: 1ch;
+  }
+  & dd {
+    margin: 0;
+    margin-left: calc(1em + var(--identifier-width)) !important;
+    min-width: 5em;
+  }
+  & .authors {
+    & .author {
+      display: inline-block;
+      margin-right: 1.5em;
+    }
+    & .org {
+      font-style: italic;
+    }
+  }
+}
+
+/* The prepared/rendered info at the very bottom of the page */
+.docInfo {
+  color: #999;
+  font-size: 0.9em;
+  font-style: italic;
+  margin-top: 2em;
+  & .prepared {
+    float: right;
+  }
+}
+
+/* table of contents */
+#toc {
+  padding: 0.75em 0 2em 0;
+  margin-bottom: 1em;
+
+  & nav {
+    & ul {
+      margin: 0 0.5em 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    & li {
+      line-height: 1.3em;
+      margin: 2px 0;
+      padding-left: 1.2em;
+      text-indent: -1.2em;
+    }
+  }
+  & a.xref {
+    white-space: normal;
+  }
+}
+
+.references {
+  & > dt {
+    text-align: right;
+    font-weight: bold;
+    min-width: 10ch;
+    margin-right: 1.5ch;
+    &:target::before {
+      content: "⇒";
+      margin: 0 10px 0 -25px;
+    }
+  }
+  & > dd {
+    margin-left: 12ch !important;
+    overflow: visible;
+    & .refInstance {
+      margin-bottom: 0.8em;
+    }
+    & .ascii {
+      margin-bottom: 0.25em;
+    }
+  }
+}
+
+#rfc\.index\.index + ul {
+  margin-left: 0;
+}
+
+/* authors */
+address.vcard {
+  font-style: normal;
+  max-width: 20em;
+  margin: 1em auto 1em 0;
+
+  & .nameRole {
+    font-weight: 700;
+    margin-left: 0;
+  }
+  & .label {
+    margin: 0.5em 0;
+  }
+  & .type {
+    display: none;
+  }
+  & .alternative-contact {
+    margin: 0.5em 0 0.25em 0;
+  }
+  & .non-ascii {
+    margin: 0 0 0 2em;
+  }
+  & div.left {
+    text-align: left;
+  }
+  & div.right {
+    text-align: right;
+  }
+}
+
+hr.addr {
+  border-top: 1px dashed;
+  margin: 0;
+  color: #ddd;
+  max-width: calc(100% - 16px);
+}
+@media (min-width: 500px) {
+  #authors-addresses {
+    & > section {
+      column-count: 2;
+      column-gap: 20px;
+    }
+    & > section > h2 {
+      column-span: all;
+    }
+    /* hack for break-inside: avoid-column */
+    & address {
+      display: inline-block;
+      break-inside: avoid-column;
+    }
+  }
+}
+
+/* Comments */
+.rfcEditorRemove {
+  & p:first-of-type {
+    font-style: italic;
+  }
+}
+.cref {
+  background-color: rgba(249, 232, 105, 0.3);
+  padding: 2px 4px;
+}
+.crefSource {
+  font-style: italic;
+}
+
+@media screen {
+  #toc {
+    & nav {
+      font-family: var(--font-title);
+      font-weight: 360;
+      & > ul { margin-bottom: 2em; }
+      & ul {
+        margin: 0 0 0 4px;
+        & :is(p, li) {
+          margin: 2px 0;
+        }
+      }
+    }
+    & a.toplink {
+      float: right;
+    }
+  }
+}
+@media not screen {
+  #toc a.toplink {
+    display: none;
+  }
+}
+
+
+/* TOC layout for smaller screens */
+@media screen and (max-width: 929px) {
+  #toc {
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    padding: 1px 0 0 0;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+    opacity: 0.6;
+    & h2 {
+      margin: 0;
+      padding: 2px 0 2px 6px;
+      padding-right: 1em;
+      font-size: 18px;
+      line-height: 24px;
+      min-width: 190px;
+      text-align: right;
+      background-color: #444;
+      color: white;
+      cursor: pointer;
+      &::before { /* css hamburger */
+        float: right;
+        position: relative;
+        width: 1em;
+        height: 1px;
+        left: -164px;
+        margin: 8px 0 0 0;
+        background: white none repeat scroll 0 0;
+        box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+        content: "";
+      }
+    }
+    & nav {
+      display: none;
+      background-color: var(--background-color);
+      padding: 0.5em 1em 1em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      height: calc(100vh - 48px);
+      border-left: 1px solid #ddd;
+    }
+    &.active {
+      opacity: 1;
+      & nav { display: block; }
+    }
+    /* Make the collapsed ToC header render white on gray also when it's a link */
+    & h2 a,
+    & h2 a:is(:link, :focus, :hover),
+    & a.toplink,
+    & a.toplink:hover {
+      color: white;
+      background-color: #444;
+      text-decoration: none;
+    }
+    & a.toplink {
+      margin: 2px 0.5em 0;
+    }
+  }
+}
+
+/* TOC layout for wide screens */
+@media screen and (min-width: 930px) {
+  body {
+    padding-right: 360px;
+    padding-right: calc(min(180px + 20%, 500px));
+  }
+  #toc {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    right: calc(50vw - 480px);
+    width: 312px;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
+    & h2 {
+      margin: 0;
+      padding: 0.25em 1em 1em 0;
+    }
+    & nav {
+      display: block;
+      height: calc(90vh - 84px);
+      bottom: 0;
+      padding: 0.5em 0 2em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+    & a.toplink {
+      margin: 8px 0.5em 0;
+    }
+  }
+  img { /* future proofing */
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* pagination */
+@media print {
+  body {
+    width: 100%;
+  }
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+  #n-copyright-notice {
+    border-bottom: none;
+  }
+  #toc {
+    page-break-before: always;
+    border-top: none;
+    padding-top: 0;
+  }
+  #n-introduction {
+    page-break-before: always;
+  }
+  figure, pre, .vcard {
+    page-break-inside: avoid;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  :is(h2, h3, h4, h5, h6)+*, dd {
+    page-break-before: avoid;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 10pt;
+  }
+  table {
+    border: 1px solid #ddd;
+  }
+  td {
+    border-top: 1px solid #ddd;
+  }
+}
+
+@page :first {
+  padding-top: 0;
+  @top-left {
+    content: normal;
+    border: none;
+  }
+  @top-center {
+    content: normal;
+    border: none;
+  }
+  @top-right {
+    content: normal;
+    border: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin-bottom: 45mm;
+  padding-top: 20px;
+}
+
+/* Dark mode. */
+@media (prefers-color-scheme: dark) {
+:root {
+  --background-color: #121212;
+  --text-color: #f0f0f0;
+  --title-color: #fff;
+  --link-color: #4da4f0;
+  --highlight-color: #282828;
+  --line-color: #444;
+  --pilcrow-weak: #444;
+  --pilcrow-strong: #666;
+  scrollbar-color: #777 #333;
+}
+}
+
+/* SVG Trick: a prefix match works because only black and white are allowed */
+svg {
+  & :is([stroke="black"], [stroke^="#000"]) {
+    stroke: var(--text-color);
+  }
+  & :is([stroke="white"], [stroke^="#fff"]) {
+    stroke: var(--background-color);
+  }
+  & :is([fill="black"], [fill^="#000"], :not([fill])) {
+    fill: var(--text-color);
+  }
+  & :is([fill="white"], [fill^="#fff"]) {
+    fill: var(--background-color);
+  }
+}
+</style>
+
+</head>
+<body class="xml2rfc">
+<table class="ears">
+<thead><tr>
+<td class="left">Internet-Draft</td>
+<td class="center">vCon Tool Invocation Extension</td>
+<td class="right">November 2026</td>
+</tr></thead>
+<tfoot><tr>
+<td class="left">Petrie</td>
+<td class="center">Expires 6 May 2027</td>
+<td class="right">[Page]</td>
+</tr></tfoot>
+</table>
+<div id="external-metadata" class="document-information"></div>
+<div id="internal-metadata" class="document-information">
+<dl id="identifiers">
+<dt class="label-workgroup">Workgroup:</dt>
+<dd class="workgroup">Virtualized Conversations</dd>
+<dt class="label-internet-draft">Internet-Draft:</dt>
+<dd class="internet-draft">draft-petrie-vcon-tool-invocation-latest</dd>
+<dt class="label-published">Published:</dt>
+<dd class="published">
+<time datetime="2026-11-02" class="published">2 November 2026</time>
+    </dd>
+<dt class="label-intended-status">Intended Status:</dt>
+<dd class="intended-status">Standards Track</dd>
+<dt class="label-expires">Expires:</dt>
+<dd class="expires"><time datetime="2027-05-06">6 May 2027</time></dd>
+<dt class="label-authors">Author:</dt>
+<dd class="authors">
+<div class="author">
+      <div class="author-name">D. G Petrie</div>
+<div class="org">SIPez LLC</div>
+</div>
+</dd>
+</dl>
+</div>
+<h1 id="title">The JSON vCon - Tool Invocation Extension</h1>
+<section id="section-abstract">
+      <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
+<p id="section-abstract-1">A vCon is a container for data and information relating to a conversation.
+This document defines an extension to the JSON vCon schema for recording the policy decisions of AI agents and their invocation of tools.
+Before an agent performs an operation, the agent or its host uses policy to decide whether the operation is allowed, disallowed or requires permission.
+This document defines an Event Object type for those decisions, and Event Object types for each step of a tool invocation.
+It also outlines requirements for recording requests for permission and direction, which need to be defined in a future document.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+</section>
+<section class="note rfcEditorRemove" id="section-note.1">
+      <h2 id="name-about-this-document">
+<a href="#name-about-this-document" class="section-name selfRef">About This Document</a>
+      </h2>
+<p id="section-note.1-1">This note is to be removed before publishing as an RFC.<a href="#section-note.1-1" class="pilcrow">¶</a></p>
+<p id="section-note.1-2">
+        The latest revision of this draft can be found at <span><a href="https://dgpetrie.github.io/draft-petrie-vcon-tool-invocation/draft-petrie-vcon-tool-invocation.html">https://dgpetrie.github.io/draft-petrie-vcon-tool-invocation/draft-petrie-vcon-tool-invocation.html</a></span>.
+        Status information for this document may be found at <span><a href="https://datatracker.ietf.org/doc/draft-petrie-vcon-tool-invocation/">https://datatracker.ietf.org/doc/draft-petrie-vcon-tool-invocation/</a></span>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
+<p id="section-note.1-3">
+        Discussion of this document takes place on the
+        Virtualized Conversations Working Group mailing list (<span><a href="mailto:vcon@ietf.org">mailto:vcon@ietf.org</a></span>),
+        which is archived at <span><a href="https://mailarchive.ietf.org/arch/browse/vcon/">https://mailarchive.ietf.org/arch/browse/vcon/</a></span>.
+        Subscribe at <span><a href="https://www.ietf.org/mailman/listinfo/vcon/">https://www.ietf.org/mailman/listinfo/vcon/</a></span>.<a href="#section-note.1-3" class="pilcrow">¶</a></p>
+<p id="section-note.1-4">Source for this draft and an issue tracker can be found at
+        <span><a href="https://github.com/dgpetrie/draft-petrie-vcon-tool-invocation">https://github.com/dgpetrie/draft-petrie-vcon-tool-invocation</a></span>.<a href="#section-note.1-4" class="pilcrow">¶</a></p>
+</section>
+<div id="status-of-memo">
+<section id="section-boilerplate.1">
+        <h2 id="name-status-of-this-memo">
+<a href="#name-status-of-this-memo" class="section-name selfRef">Status of This Memo</a>
+        </h2>
+<p id="section-boilerplate.1-1">
+        This Internet-Draft is submitted in full conformance with the
+        provisions of BCP 78 and BCP 79.<a href="#section-boilerplate.1-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-2">
+        Internet-Drafts are working documents of the Internet Engineering Task
+        Force (IETF). Note that other groups may also distribute working
+        documents as Internet-Drafts. The list of current Internet-Drafts is
+        at <span><a href="https://datatracker.ietf.org/drafts/current/">https://datatracker.ietf.org/drafts/current/</a></span>.<a href="#section-boilerplate.1-2" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-3">
+        Internet-Drafts are draft documents valid for a maximum of six months
+        and may be updated, replaced, or obsoleted by other documents at any
+        time. It is inappropriate to use Internet-Drafts as reference
+        material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-4">
+        This Internet-Draft will expire on 6 May 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="copyright">
+<section id="section-boilerplate.2">
+        <h2 id="name-copyright-notice">
+<a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
+        </h2>
+<p id="section-boilerplate.2-1">
+            Copyright (c) 2026 IETF Trust and the persons identified as the
+            document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<span><a href="https://trustee.ietf.org/license-info">https://trustee.ietf.org/license-info</a></span>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.<a href="#section-boilerplate.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="toc">
+<section id="section-toc.1">
+        <a href="#" onclick="scroll(0,0)" class="toplink">▲</a><h2 id="name-table-of-contents">
+<a href="#name-table-of-contents" class="section-name selfRef">Table of Contents</a>
+        </h2>
+<nav class="toc"><ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
+            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
+            <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-conventions-and-definitions" class="internal xref">Conventions and Definitions</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.1">
+                <p id="section-toc.1-1.2.2.1.1" class="keepWithNext"><a href="#section-2.1" class="auto internal xref">2.1</a>.  <a href="#name-terminology" class="internal xref">Terminology</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
+            <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-extension-name" class="internal xref">Extension Name</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-policy-decision-state-model" class="internal xref">Policy Decision State Model</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
+                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-policy-decisions" class="internal xref">Policy Decisions</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-tool-invocation-state-model" class="internal xref">Tool Invocation State Model</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-attempts" class="internal xref">Attempts</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-parameter-definitions" class="internal xref">Parameter Definitions</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1">
+                <p id="section-toc.1-1.6.2.1.1"><a href="#section-6.1" class="auto internal xref">6.1</a>.  <a href="#name-event-object-types-and-para" class="internal xref">Event Object Types and Parameters</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1.2.1">
+                    <p id="section-toc.1-1.6.2.1.2.1.1"><a href="#section-6.1.1" class="auto internal xref">6.1.1</a>.  <a href="#name-event-object-parameter-appl" class="internal xref">Event Object Parameter Applicability by Type</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1.2.2">
+                    <p id="section-toc.1-1.6.2.1.2.2.1"><a href="#section-6.1.2" class="auto internal xref">6.1.2</a>.  <a href="#name-operation_id" class="internal xref">operation_id</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1.2.3">
+                    <p id="section-toc.1-1.6.2.1.2.3.1"><a href="#section-6.1.3" class="auto internal xref">6.1.3</a>.  <a href="#name-attempt" class="internal xref">attempt</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1.2.4">
+                    <p id="section-toc.1-1.6.2.1.2.4.1"><a href="#section-6.1.4" class="auto internal xref">6.1.4</a>.  <a href="#name-decision" class="internal xref">decision</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1.2.5">
+                    <p id="section-toc.1-1.6.2.1.2.5.1"><a href="#section-6.1.5" class="auto internal xref">6.1.5</a>.  <a href="#name-policy_life" class="internal xref">policy_life</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1.2.6">
+                    <p id="section-toc.1-1.6.2.1.2.6.1"><a href="#section-6.1.6" class="auto internal xref">6.1.6</a>.  <a href="#name-reason" class="internal xref">reason</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1.2.7">
+                    <p id="section-toc.1-1.6.2.1.2.7.1"><a href="#section-6.1.7" class="auto internal xref">6.1.7</a>.  <a href="#name-operation" class="internal xref">operation</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1.2.8">
+                    <p id="section-toc.1-1.6.2.1.2.8.1"><a href="#section-6.1.8" class="auto internal xref">6.1.8</a>.  <a href="#name-server" class="internal xref">server</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1.2.9">
+                    <p id="section-toc.1-1.6.2.1.2.9.1"><a href="#section-6.1.9" class="auto internal xref">6.1.9</a>.  <a href="#name-tool" class="internal xref">tool</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1.2.10">
+                    <p id="section-toc.1-1.6.2.1.2.10.1"><a href="#section-6.1.10" class="auto internal xref">6.1.10</a>. <a href="#name-event-content" class="internal xref">Event Content</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1.2.11">
+                    <p id="section-toc.1-1.6.2.1.2.11.1"><a href="#section-6.1.11" class="auto internal xref">6.1.11</a>. <a href="#name-attachment" class="internal xref">attachment</a></p>
+</li>
+                </ul>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-requirements-for-permission" class="internal xref">Requirements for Permission and Directive Events</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-compatibility-consideration" class="internal xref">Compatibility Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-incompatibility-considerati" class="internal xref">Incompatibility Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-privacy-and-integrity-consi" class="internal xref">Privacy and Integrity Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
+            <p id="section-toc.1-1.12.1"><a href="#section-12" class="auto internal xref">12</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.1">
+                <p id="section-toc.1-1.12.2.1.1"><a href="#section-12.1" class="auto internal xref">12.1</a>.  <a href="#name-vcon-json-registry-addition" class="internal xref">vCon JSON Registry Additions</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.1.2.1">
+                    <p id="section-toc.1-1.12.2.1.2.1.1"><a href="#section-12.1.1" class="auto internal xref">12.1.1</a>.  <a href="#name-vcon-extensions-names-regis" class="internal xref">vCon Extensions Names Registry</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.1.2.2">
+                    <p id="section-toc.1-1.12.2.1.2.2.1"><a href="#section-12.1.2" class="auto internal xref">12.1.2</a>.  <a href="#name-event-type-name-registry" class="internal xref">Event Type Name Registry</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12.2.1.2.3">
+                    <p id="section-toc.1-1.12.2.1.2.3.1"><a href="#section-12.1.3" class="auto internal xref">12.1.3</a>.  <a href="#name-event-object-parameter-name" class="internal xref">Event Object Parameter Names Registry</a></p>
+</li>
+                </ul>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
+            <p id="section-toc.1-1.13.1"><a href="#section-13" class="auto internal xref">13</a>. <a href="#name-references" class="internal xref">References</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.1">
+                <p id="section-toc.1-1.13.2.1.1"><a href="#section-13.1" class="auto internal xref">13.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.2">
+                <p id="section-toc.1-1.13.2.2.1"><a href="#section-13.2" class="auto internal xref">13.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14">
+            <p id="section-toc.1-1.14.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-mapping-to-mcp" class="internal xref">Mapping to MCP</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15">
+            <p id="section-toc.1-1.15.1"><a href="#appendix-B" class="auto internal xref">Appendix B</a>.  <a href="#name-example-vcons" class="internal xref">Example vCons</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16">
+            <p id="section-toc.1-1.16.1"><a href="#appendix-C" class="auto internal xref">Appendix C</a>.  <a href="#name-json-schema-for-the-tool-in" class="internal xref">JSON Schema for the tool-invocation Extension</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17">
+            <p id="section-toc.1-1.17.1"><a href="#appendix-D" class="auto internal xref">Appendix D</a>.  <a href="#name-cddl-for-the-tool-invocatio" class="internal xref">CDDL for the tool-invocation Extension</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.18">
+            <p id="section-toc.1-1.18.1"><a href="#appendix-E" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.19">
+            <p id="section-toc.1-1.19.1"><a href="#appendix-F" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+</li>
+        </ul>
+</nav>
+</section>
+</div>
+<div id="introduction">
+<section id="section-1">
+      <h2 id="name-introduction">
+<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
+      </h2>
+<p id="section-1-1">This document adds Event Object types for recording the policy decisions of AI agents and their invocation of tools to the JSON <span>[<a href="#JSON" class="cite xref">JSON</a>]</span> vCon schema defined in <span>[<a href="#VCON-CORE" class="cite xref">VCON-CORE</a>]</span>.
+The general framework and requirements for defining an extension to the JSON vCon schema are defined in <span>[<a href="#VCON-CORE" class="cite xref">VCON-CORE</a>]</span>.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">AI agents converse with people and other agents, and perform operations on their behalf (e.g. invoking tools).
+The conversation between an agent and a person or another agent is captured with Dialog Objects in <span>[<a href="#VCON-CORE" class="cite xref">VCON-CORE</a>]</span>.
+The use of a tool by an agent is not dialog.
+It is a request to the tool and one or more responses from it, which are captured in this document as Event Objects.
+This fills the gap for tool invocations and results identified in <span>[<a href="#ROADMAP" class="cite xref">ROADMAP</a>]</span>, and covers the agent view of an Action Record in <span>[<a href="#AUDIT-ARCH" class="cite xref">AUDIT-ARCH</a>]</span>.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">Before an agent performs an operation (e.g. invoking a tool), the agent or its host decides by policy whether the operation may be performed.
+The decision is that no permission is needed, that permission is required or that the operation is disallowed.
+No one is asked, so there is no conversation, only the decision and what it applies to.<a href="#section-1-3" class="pilcrow">¶</a></p>
+<p id="section-1-4">The policy decision is defined in this document because the invocation of a tool is the most common operation it applies to, and the decision is part of the life cycle of a tool invocation.
+Its outcome determines whether the tool is invoked, and it identifies the tool by the same parameters as the invocation.
+Without it, a use of a tool which was disallowed, or for which permission was not granted, would leave no record.
+The decision is defined so that it can also apply to other operations (e.g. delegating to another agent).<a href="#section-1-4" class="pilcrow">¶</a></p>
+<p id="section-1-5">This document defines a state model for the policy decision (see <a href="#policy-model" class="auto internal xref">Section 4</a>) and a state model for a tool invocation (see <a href="#state-model" class="auto internal xref">Section 5</a>), with an Event Object type for each transition in them.
+The Event Object types are not specific to any one protocol.
+The Model Context Protocol <span>[<a href="#MCP" class="cite xref">MCP</a>]</span> is used as the first example, and a mapping to it is given in <a href="#mapping-to-mcp" class="auto internal xref">Appendix A</a>.
+The word "invocation" is used rather than "call", as "call" in vCon commonly implies a telephone call.<a href="#section-1-5" class="pilcrow">¶</a></p>
+<p id="section-1-6">Requests for permission or direction made to the person or agent on whose behalf the agent is acting, and their responses, are not defined in this document.
+They are part of the conversation, and occur outside tool invocations as well as within them (e.g. a clarifying choice put to a person, approval to delegate to another agent, and in contact centers, consent to record and IVR menu choices).
+Event Object types for them need to be defined in a future document.
+The requirements identified so far are outlined in <a href="#directives" class="auto internal xref">Section 7</a>.<a href="#section-1-6" class="pilcrow">¶</a></p>
+<p id="section-1-7">The following are also not in the scope of this document:<a href="#section-1-7" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-1-8.1">
+          <p id="section-1-8.1.1">The definition of tools and of the tools available to an agent.
+This document assumes that tools are defined elsewhere and only records their use.<a href="#section-1-8.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-8.2">
+          <p id="section-1-8.2.1">Making or enforcing the policy decision.
+Only the decision is recorded.<a href="#section-1-8.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-8.3">
+          <p id="section-1-8.3.1">The record of the invocation kept by the tool or its provider.
+This is another observation point, which may be captured in the same vCon, in a separate vCon or in a log (see <span>[<a href="#ROADMAP" class="cite xref">ROADMAP</a>]</span>).<a href="#section-1-8.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-8.4">
+          <p id="section-1-8.4.1">The protocol used to invoke the tool.
+Only the data exchanged and the outcome of the invocation are captured.<a href="#section-1-8.4.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+</section>
+</div>
+<div id="conventions-and-definitions">
+<section id="section-2">
+      <h2 id="name-conventions-and-definitions">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-conventions-and-definitions" class="section-name selfRef">Conventions and Definitions</a>
+      </h2>
+<p id="section-2-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
+"<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
+described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
+appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<div id="terminology">
+<section id="section-2.1">
+        <h3 id="name-terminology">
+<a href="#section-2.1" class="section-number selfRef">2.1. </a><a href="#name-terminology" class="section-name selfRef">Terminology</a>
+        </h3>
+<p id="section-2.1-1">See section 2.1 of <span>[<a href="#VCON-CORE" class="cite xref">VCON-CORE</a>]</span> for terminology used in this document.<a href="#section-2.1-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-2.1-2">
+          <dt id="section-2.1-2.1">Agent:</dt>
+          <dd style="margin-left: 1.5em" id="section-2.1-2.2">
+            <p id="section-2.1-2.2.1">A party that acts on behalf of a person or another agent and that performs operations, such as invoking tools.
+TODO: align with the definition in <span>[<a href="#ROADMAP" class="cite xref">ROADMAP</a>]</span>.<a href="#section-2.1-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-2.1-2.3">Host:</dt>
+          <dd style="margin-left: 1.5em" id="section-2.1-2.4">
+            <p id="section-2.1-2.4.1">The software in which an agent runs and through which it sends requests to tools.
+The host may itself provide tools, and is then a server.<a href="#section-2.1-2.4.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-2.1-2.5">Server:</dt>
+          <dd style="margin-left: 1.5em" id="section-2.1-2.6">
+            <p id="section-2.1-2.6.1">The provider of a set of tools (e.g. an <span>[<a href="#MCP" class="cite xref">MCP</a>]</span> server, or the host).<a href="#section-2.1-2.6.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-2.1-2.7">Tool:</dt>
+          <dd style="margin-left: 1.5em" id="section-2.1-2.8">
+            <p id="section-2.1-2.8.1">A named function or service which an agent may invoke.
+A tool is not a party in the vCon.<a href="#section-2.1-2.8.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-2.1-2.9">Operation:</dt>
+          <dd style="margin-left: 1.5em" id="section-2.1-2.10">
+            <p id="section-2.1-2.10.1">An action which an agent performs, and to which a policy decision applies (e.g. the invocation of a tool).<a href="#section-2.1-2.10.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-2.1-2.11">Policy Decision:</dt>
+          <dd style="margin-left: 1.5em" id="section-2.1-2.12">
+            <p id="section-2.1-2.12.1">The decision made by the agent or its host, by policy, whether an operation may be performed.<a href="#section-2.1-2.12.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-2.1-2.13">Invocation:</dt>
+          <dd style="margin-left: 1.5em" id="section-2.1-2.14">
+            <p id="section-2.1-2.14.1">The use of a tool by an agent, which is one kind of operation, consisting of one or more attempts.<a href="#section-2.1-2.14.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-2.1-2.15">Attempt:</dt>
+          <dd style="margin-left: 1.5em" id="section-2.1-2.16">
+            <p id="section-2.1-2.16.1">A single request sent to a tool for an invocation, and the responses to that request.<a href="#section-2.1-2.16.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+</dl>
+</section>
+</div>
+</section>
+</div>
+<div id="extension-name">
+<section id="section-3">
+      <h2 id="name-extension-name">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-extension-name" class="section-name selfRef">Extension Name</a>
+      </h2>
+<p id="section-3-1">The extension name for this document is "tool-invocation".<a href="#section-3-1" class="pilcrow">¶</a></p>
+<p id="section-3-2">A vCon that contains any of the Event Object types defined in this document <span class="bcp14">SHOULD</span> include "tool-invocation" in the extensions parameter.
+"tool-invocation" is not required in the critical parameter (see <a href="#compatibility-considerations" class="auto internal xref">Section 8</a>).<a href="#section-3-2" class="pilcrow">¶</a></p>
+<p id="section-3-3">TODO: revisit whether "tool-invocation" is required in the critical parameter, pending <a href="#incompatibility-considerations" class="auto internal xref">Section 9</a>.<a href="#section-3-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="policy-model">
+<section id="section-4">
+      <h2 id="name-policy-decision-state-model">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-policy-decision-state-model" class="section-name selfRef">Policy Decision State Model</a>
+      </h2>
+<p id="section-4-1">Before an operation is performed, the agent or its host makes a policy decision whether it may be performed.
+When the decision is made for that operation alone, it is recorded as a "policy-decision" type Event Object (see <a href="#policy-decisions" class="auto internal xref">Section 4.1</a>).
+If the operation is allowed, or permission is required and is granted, the operation is performed.
+For a tool invocation, the next Event Object is then the "tool-invocation" type Event Object (see <a href="#state-model" class="auto internal xref">Section 5</a>).
+If the operation is disallowed, or permission is required and is not granted, the operation is not performed.<a href="#section-4-1" class="pilcrow">¶</a></p>
+<p id="section-4-2">The state before an operation is set by the policy decision which applies to it: a "policy-decision" type Event Object for that operation alone, or a standing decision in effect for it (see <a href="#policy-decisions" class="auto internal xref">Section 4.1</a>).
+An operation covered by a standing decision has no "policy-decision" type Event Object of its own.
+When no policy decision for an operation was observed (e.g. by an observer at the tool), the vCon contains no "policy-decision" type Event Object for it.<a href="#section-4-2" class="pilcrow">¶</a></p>
+<p id="section-4-3">The policy decision follows the state model shown in <a href="#fig-policy-states" class="auto internal xref">Figure 1</a>.<a href="#section-4-3" class="pilcrow">¶</a></p>
+<span id="name-policy-decision-states"></span><div id="fig-policy-states">
+<figure id="figure-1">
+        <div class="alignLeft art-text artwork" id="section-4-4.1">
+<pre>
+                     policy-decision
+                            |
+      +---------------------+----------------------+
+      | allowed             | permission-required  | disallowed
+      v                     v                      v
+ +---------+     +---------------------+     +------------+
+ | Allowed |     | Permission Required |     | Disallowed |
+ +---------+     +---------------------+     +------------+
+      |                     | (1)
+      +---------------------+
+                            v
+                operation is performed
+                (e.g. tool-invocation)
+
+  (1) permission granted (see Requirements for Permission and
+      Directive Events)
+</pre>
+</div>
+<figcaption><a href="#figure-1" class="selfRef">Figure 1</a>:
+<a href="#name-policy-decision-states" class="selfRef">Policy Decision States</a>
+        </figcaption></figure>
+</div>
+<p id="section-4-5">The states are:<a href="#section-4-5" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-4-6.1">
+          <p id="section-4-6.1.1">Allowed - the policy decision is that no permission is needed<a href="#section-4-6.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-4-6.2">
+          <p id="section-4-6.2.1">Permission Required - the policy decision is that permission is required before the operation is performed<a href="#section-4-6.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-4-6.3">
+          <p id="section-4-6.3.1">Disallowed - the policy decision is that the operation is disallowed, and it is not performed<a href="#section-4-6.3.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-4-7">The following table defines the transitions.<a href="#section-4-7" class="pilcrow">¶</a></p>
+<span id="name-policy-decision-state-trans"></span><table class="center" id="table-1">
+        <caption>
+<a href="#table-1" class="selfRef">Table 1</a>:
+<a href="#name-policy-decision-state-trans" class="selfRef">Policy Decision State Transitions</a>
+        </caption>
+<thead>
+          <tr>
+            <th class="text-left" rowspan="1" colspan="1">From State</th>
+            <th class="text-left" rowspan="1" colspan="1">Event Object</th>
+            <th class="text-left" rowspan="1" colspan="1">To State</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">(before the operation)</td>
+            <td class="text-left" rowspan="1" colspan="1">policy-decision, decision "allowed"</td>
+            <td class="text-left" rowspan="1" colspan="1">Allowed</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">(before the operation)</td>
+            <td class="text-left" rowspan="1" colspan="1">policy-decision, decision "permission-required"</td>
+            <td class="text-left" rowspan="1" colspan="1">Permission Required</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">(before the operation)</td>
+            <td class="text-left" rowspan="1" colspan="1">policy-decision, decision "disallowed"</td>
+            <td class="text-left" rowspan="1" colspan="1">Disallowed</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Allowed</td>
+            <td class="text-left" rowspan="1" colspan="1">the operation (e.g. tool-invocation)</td>
+            <td class="text-left" rowspan="1" colspan="1">(operation is performed)</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Permission Required, when permission is granted</td>
+            <td class="text-left" rowspan="1" colspan="1">the operation (e.g. tool-invocation)</td>
+            <td class="text-left" rowspan="1" colspan="1">(operation is performed)</td>
+          </tr>
+        </tbody>
+      </table>
+<p id="section-4-9">The request for permission and the response are not defined in this document (see <a href="#directives" class="auto internal xref">Section 7</a>).
+When permission is not granted, the operation is not performed, and for a tool invocation no "tool-invocation" type Event Object follows.
+The Event Objects of this document alone do not distinguish permission refused, from no response, from a response which was not observed.<a href="#section-4-9" class="pilcrow">¶</a></p>
+<div id="policy-decisions">
+<section id="section-4.1">
+        <h3 id="name-policy-decisions">
+<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-policy-decisions" class="section-name selfRef">Policy Decisions</a>
+        </h3>
+<p id="section-4.1-1">The policy decides whether a decision applies to one operation only or is standing.<a href="#section-4.1-1" class="pilcrow">¶</a></p>
+<p id="section-4.1-2">A decision for one operation applies only to that operation, and is recorded before the operation is performed.
+It is recorded as a "policy-decision" type Event Object with the policy_life parameter "once" and the operation_id of the operation.
+Depending upon the policy, a decision for one operation may be made before any attempt of it, and is then recorded before that attempt with its attempt number.<a href="#section-4.1-2" class="pilcrow">¶</a></p>
+<p id="section-4.1-3">A standing decision applies to all later operations of the same kind and target.
+For a tool invocation, the target is a tool, or all of the tools of a server when no tool is named.
+It is recorded as a "policy-decision" type Event Object with the policy_life parameter "standing" and no operation_id.
+Operations covered by a standing decision have no "policy-decision" type Event Object of their own.
+A standing decision applies until a later "policy-decision" type Event Object for the same operation and target replaces it, or until the end of the vCon.
+When a host starts a new vCon while standing decisions from an earlier vCon are still in effect, it <span class="bcp14">SHOULD</span> record a "policy-decision" type Event Object for each of them at the start of the new vCon.<a href="#section-4.1-3" class="pilcrow">¶</a></p>
+<p id="section-4.1-4">TODO: how a standing decision for one tool and a standing decision for all of the tools of the same server interact (e.g. which applies when both are in effect).<a href="#section-4.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="state-model">
+<section id="section-5">
+      <h2 id="name-tool-invocation-state-model">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-tool-invocation-state-model" class="section-name selfRef">Tool Invocation State Model</a>
+      </h2>
+<p id="section-5-1">A tool invocation starts with a "tool-invocation" type Event Object, after any policy decision which applies to it (see <a href="#policy-model" class="auto internal xref">Section 4</a>).
+The invocation, and each attempt of it, follows the state model shown in <a href="#fig-states" class="auto internal xref">Figure 2</a>.
+Each transition is recorded as an Event Object of the type that labels it.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<span id="name-tool-invocation-states"></span><div id="fig-states">
+<figure id="figure-2">
+        <div class="alignLeft art-text artwork" id="section-5-2.1">
+<pre>
+                tool-invocation (attempt n) &lt;- - - - - - - - - -+
+                            |                                   .
++- Active ------------------|-------------------------------+   .
+| +- Working ---------------|-----------------------------+ |   .
+| |                         v                             | |   .
+| |   +-----------+   tool-pending   +-----------+        | |   .
+| |   |  Running  |-----------------&gt;|  Pending  |        | |   .
+| |   +-----------+                  +-----------+        | |   .
+| |       ^   |                        |   ^              | |   .
+| |   (2) |   | (1)                (1) |   | (2)          | |   .
+| |       |   v                        v   |              | |   .
+| |   +----------------------------------------+          | |   .
+| |   |             Input Required             |          | |   .
+| |   +----------------------------------------+          | |   .
+| +-------------------------------------------------------+ |   .
+|         |                          |                      |   .
+|         | tool-timeout             | tool-cancel          |   .
+|         v                          v                      |   .
+|   +-----------+  tool-cancel  +------------------+        |   .
+|   | Timed Out |--------------&gt;| Cancel Requested |        |   .
+|   +-----------+               +------------------+        |   .
++-----------------------------------------------------------+   .
+                            |                                   .
+       tool-result, tool-failure, tool-error, tool-denied       .
+                            v                                   .
++- Attempt Ended -------------------------------------------+   .
+|  +-----------+  +--------+  +---------+  +--------+       |   .
+|  | Completed |  | Failed |  | Errored |  | Denied |       |- -+
+|  +-----------+  +--------+  +---------+  +--------+       |
++-----------------------------------------------------------+
+
+  (1) tool-input   (2) tool-input-response
+  tool-progress may occur in Running, Pending, Timed Out and
+  Cancel Requested.
+  - - - next attempt: same operation_id, attempt n + 1
+</pre>
+</div>
+<figcaption><a href="#figure-2" class="selfRef">Figure 2</a>:
+<a href="#name-tool-invocation-states" class="selfRef">Tool Invocation States</a>
+        </figcaption></figure>
+</div>
+<p id="section-5-3">The states are:<a href="#section-5-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5-4.1">
+          <p id="section-5-4.1.1">Running - the request has been sent to the tool and it is performing the operation<a href="#section-5-4.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-5-4.2">
+          <p id="section-5-4.2.1">Pending - the tool has accepted the request and will complete it later<a href="#section-5-4.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-5-4.3">
+          <p id="section-5-4.3.1">Input Required - the tool has asked the agent for input before it continues<a href="#section-5-4.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-5-4.4">
+          <p id="section-5-4.4.1">Timed Out - the agent has stopped waiting for a response<a href="#section-5-4.4.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-5-4.5">
+          <p id="section-5-4.5.1">Cancel Requested - the agent has asked the tool to stop<a href="#section-5-4.5.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-5-4.6">
+          <p id="section-5-4.6.1">Completed, Failed, Errored and Denied - the attempt has ended<a href="#section-5-4.6.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-5-5">Running, Pending and Input Required are the Working states.
+The Working states, Timed Out and Cancel Requested are the Active states.
+Timed Out and Cancel Requested are not final.
+A tool may still respond after the agent has timed out or asked it to stop, and that response is recorded.<a href="#section-5-5" class="pilcrow">¶</a></p>
+<p id="section-5-6">The following table defines the transitions.<a href="#section-5-6" class="pilcrow">¶</a></p>
+<span id="name-tool-invocation-state-trans"></span><table class="center" id="table-2">
+        <caption>
+<a href="#table-2" class="selfRef">Table 2</a>:
+<a href="#name-tool-invocation-state-trans" class="selfRef">Tool Invocation State Transitions</a>
+        </caption>
+<thead>
+          <tr>
+            <th class="text-left" rowspan="1" colspan="1">From State</th>
+            <th class="text-left" rowspan="1" colspan="1">Event Object Type</th>
+            <th class="text-left" rowspan="1" colspan="1">To State</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">(start of an attempt)</td>
+            <td class="text-left" rowspan="1" colspan="1">tool-invocation</td>
+            <td class="text-left" rowspan="1" colspan="1">Running</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Running</td>
+            <td class="text-left" rowspan="1" colspan="1">tool-pending</td>
+            <td class="text-left" rowspan="1" colspan="1">Pending</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Running, Pending, Timed Out, Cancel Requested</td>
+            <td class="text-left" rowspan="1" colspan="1">tool-progress</td>
+            <td class="text-left" rowspan="1" colspan="1">(unchanged)</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Running, Pending</td>
+            <td class="text-left" rowspan="1" colspan="1">tool-input</td>
+            <td class="text-left" rowspan="1" colspan="1">Input Required</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Input Required</td>
+            <td class="text-left" rowspan="1" colspan="1">tool-input-response</td>
+            <td class="text-left" rowspan="1" colspan="1">Running or Pending, the state from which the input was requested</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Running, Pending, Input Required</td>
+            <td class="text-left" rowspan="1" colspan="1">tool-timeout</td>
+            <td class="text-left" rowspan="1" colspan="1">Timed Out</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Running, Pending, Input Required, Timed Out</td>
+            <td class="text-left" rowspan="1" colspan="1">tool-cancel</td>
+            <td class="text-left" rowspan="1" colspan="1">Cancel Requested</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">any Active state</td>
+            <td class="text-left" rowspan="1" colspan="1">tool-result</td>
+            <td class="text-left" rowspan="1" colspan="1">Completed</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">any Active state</td>
+            <td class="text-left" rowspan="1" colspan="1">tool-failure</td>
+            <td class="text-left" rowspan="1" colspan="1">Failed</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">any Active state</td>
+            <td class="text-left" rowspan="1" colspan="1">tool-error</td>
+            <td class="text-left" rowspan="1" colspan="1">Errored</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">any Active state</td>
+            <td class="text-left" rowspan="1" colspan="1">tool-denied</td>
+            <td class="text-left" rowspan="1" colspan="1">Denied</td>
+          </tr>
+        </tbody>
+      </table>
+<p id="section-5-8">TODO: should a "tool-input-response" type Event Object return to the state from which the input was requested, as above, or always to Running?<a href="#section-5-8" class="pilcrow">¶</a></p>
+<p id="section-5-9">A vCon records what was observed.
+An Event Object which does not follow the state model (e.g. because an earlier Event Object was not observed) is still recorded.<a href="#section-5-9" class="pilcrow">¶</a></p>
+<div id="attempts">
+<section id="section-5.1">
+        <h3 id="name-attempts">
+<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-attempts" class="section-name selfRef">Attempts</a>
+        </h3>
+<p id="section-5.1-1">An invocation may take more than one attempt.
+Each attempt starts with a "tool-invocation" type Event Object and follows the state model above.
+All attempts of an invocation have the same operation_id, and each later attempt has the next attempt number.
+An agent may retry after any ended attempt, for example after "tool-denied" when it has obtained more authorization, or after "tool-error".
+Every attempt <span class="bcp14">SHOULD</span> be recorded, so that the escalation leading to the final attempt can be reviewed.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
+<p id="section-5.1-2">The Event Objects of an attempt carry its attempt number, so that a late response is associated with the attempt to which it responds.<a href="#section-5.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="parameter-definitions">
+<section id="section-6">
+      <h2 id="name-parameter-definitions">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-parameter-definitions" class="section-name selfRef">Parameter Definitions</a>
+      </h2>
+<div id="event-types">
+<section id="section-6.1">
+        <h3 id="name-event-object-types-and-para">
+<a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-event-object-types-and-para" class="section-name selfRef">Event Object Types and Parameters</a>
+        </h3>
+<p id="section-6.1-1">The following types of events are defined in this document:<a href="#section-6.1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1-2.1">
+            <p id="section-6.1-2.1.1">"policy-decision" - the agent or its host made a policy decision whether an operation may be performed<a href="#section-6.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-6.1-3">and the following, collectively referred to as the tool event types:<a href="#section-6.1-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1-4.1">
+            <p id="section-6.1-4.1.1">"tool-invocation" - the agent sent a request to the tool<a href="#section-6.1-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.1-4.2">
+            <p id="section-6.1-4.2.1">"tool-pending" - the tool accepted the request and will complete it later<a href="#section-6.1-4.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.1-4.3">
+            <p id="section-6.1-4.3.1">"tool-progress" - the tool reported progress or partial output<a href="#section-6.1-4.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.1-4.4">
+            <p id="section-6.1-4.4.1">"tool-input" - the tool asked the agent for input before it continues<a href="#section-6.1-4.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.1-4.5">
+            <p id="section-6.1-4.5.1">"tool-input-response" - the agent sent the input requested by the tool<a href="#section-6.1-4.5.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.1-4.6">
+            <p id="section-6.1-4.6.1">"tool-result" - the tool completed the operation and returned its output<a href="#section-6.1-4.6.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.1-4.7">
+            <p id="section-6.1-4.7.1">"tool-failure" - the tool performed or attempted the operation and reported an error<a href="#section-6.1-4.7.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.1-4.8">
+            <p id="section-6.1-4.8.1">"tool-error" - the request failed at the protocol level (e.g. an unknown tool or invalid arguments)<a href="#section-6.1-4.8.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.1-4.9">
+            <p id="section-6.1-4.9.1">"tool-denied" - the tool refused to perform the operation<a href="#section-6.1-4.9.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.1-4.10">
+            <p id="section-6.1-4.10.1">"tool-timeout" - the agent stopped waiting for a response from the tool<a href="#section-6.1-4.10.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.1-4.11">
+            <p id="section-6.1-4.11.1">"tool-cancel" - the agent asked the tool to stop<a href="#section-6.1-4.11.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-6.1-5">The "policy-decision" type Event Object records the decision of the policy of the agent or its host, before the operation is performed (see <a href="#policy-model" class="auto internal xref">Section 4</a>).
+It is not a response from a tool.<a href="#section-6.1-5" class="pilcrow">¶</a></p>
+<p id="section-6.1-6">The "tool-denied" type Event Object records a refusal by the tool, after the request was sent to it.
+It is used only when the response from the tool is identified by the protocol as a denial (e.g. for <span>[<a href="#MCP" class="cite xref">MCP</a>]</span>, an HTTP 401 or 403 response).
+A refusal which the protocol does not distinguish from other errors is recorded as a "tool-failure" type Event Object, with the refusal in its content.<a href="#section-6.1-6" class="pilcrow">¶</a></p>
+<p id="section-6.1-7">The "tool-invocation" type Event Object records the request actually sent to the tool.<a href="#section-6.1-7" class="pilcrow">¶</a></p>
+<p id="section-6.1-8">In the Event Object types defined in this document:<a href="#section-6.1-8" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1-9.1">
+            <p id="section-6.1-9.1.1">the sessions parameter references the Session Object(s) in which the agent performed, or decided whether to perform, the operation<a href="#section-6.1-9.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.1-9.2">
+            <p id="section-6.1-9.2.1">the party parameter references the agent, including in the Event Objects for policy decisions and for responses from the tool<a href="#section-6.1-9.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.1-9.3">
+            <p id="section-6.1-9.3.1">the tool is identified by the server and tool parameters in the "tool-invocation" type Event Object and in a "policy-decision" type Event Object for the "tool-invocation" operation, and the operation by the operation_id parameter in the other tool event types<a href="#section-6.1-9.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-6.1-10">TODO: the dialog parameter in <span>[<a href="#VCON-CORE" class="cite xref">VCON-CORE</a>]</span>; decide whether it applies to the Event Object types defined in this document (e.g. a "tool-invocation" which an agent made in response to a Dialog Object).<a href="#section-6.1-10" class="pilcrow">¶</a></p>
+<div id="event-object-parameter-applicability-by-type">
+<section id="section-6.1.1">
+          <h4 id="name-event-object-parameter-appl">
+<a href="#section-6.1.1" class="section-number selfRef">6.1.1. </a><a href="#name-event-object-parameter-appl" class="section-name selfRef">Event Object Parameter Applicability by Type</a>
+          </h4>
+<p id="section-6.1.1-1">The following tables summarize which Event Object parameters apply to each Event Object type defined in this document.
+The parameter definitions in the subsections of this document are definitive; these tables are provided as a summary.
+The symbols used in the tables are: M the parameter <span class="bcp14">MUST</span> be present, S the parameter <span class="bcp14">SHOULD</span> be present, O the parameter is optional, X the parameter <span class="bcp14">MUST NOT</span> be present.
+"Content" is the body, encoding and mediatype parameters or the url, content_hash and mediatype parameters (see <a href="#event-content" class="auto internal xref">Section 6.1.10</a>).<a href="#section-6.1.1-1" class="pilcrow">¶</a></p>
+<p id="section-6.1.1-2">The following table applies to the "policy-decision" type Event Object for the "tool-invocation" operation.<a href="#section-6.1.1-2" class="pilcrow">¶</a></p>
+<span id="name-policy-decision-event-param"></span><table class="center" id="table-3">
+            <caption>
+<a href="#table-3" class="selfRef">Table 3</a>:
+<a href="#name-policy-decision-event-param" class="selfRef">Policy Decision Event Parameters</a>
+            </caption>
+<thead>
+              <tr>
+                <th class="text-left" rowspan="1" colspan="1">Parameter</th>
+                <th class="text-left" rowspan="1" colspan="1">policy-decision, policy_life "once"</th>
+                <th class="text-left" rowspan="1" colspan="1">policy-decision, policy_life "standing"</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">type</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">time</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">sessions</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">party</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">decision</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">policy_life</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">reason</td>
+                <td class="text-left" rowspan="1" colspan="1">O</td>
+                <td class="text-left" rowspan="1" colspan="1">O</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">operation</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">operation_id</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">attempt</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">server</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">tool</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">O</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">content</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">attachment</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+              </tr>
+            </tbody>
+          </table>
+<span id="name-tool-event-parameters-part-"></span><table class="center" id="table-4">
+            <caption>
+<a href="#table-4" class="selfRef">Table 4</a>:
+<a href="#name-tool-event-parameters-part-" class="selfRef">Tool Event Parameters, Part 1</a>
+            </caption>
+<thead>
+              <tr>
+                <th class="text-left" rowspan="1" colspan="1">Parameter</th>
+                <th class="text-left" rowspan="1" colspan="1">tool-invocation</th>
+                <th class="text-left" rowspan="1" colspan="1">tool-pending</th>
+                <th class="text-left" rowspan="1" colspan="1">tool-progress</th>
+                <th class="text-left" rowspan="1" colspan="1">tool-input</th>
+                <th class="text-left" rowspan="1" colspan="1">tool-input-response</th>
+                <th class="text-left" rowspan="1" colspan="1">tool-result</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">type</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">time</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">sessions</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">party</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">operation_id</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">attempt</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">server</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">tool</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">content</td>
+                <td class="text-left" rowspan="1" colspan="1">S</td>
+                <td class="text-left" rowspan="1" colspan="1">O</td>
+                <td class="text-left" rowspan="1" colspan="1">S</td>
+                <td class="text-left" rowspan="1" colspan="1">S</td>
+                <td class="text-left" rowspan="1" colspan="1">S</td>
+                <td class="text-left" rowspan="1" colspan="1">S</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">attachment</td>
+                <td class="text-left" rowspan="1" colspan="1">O</td>
+                <td class="text-left" rowspan="1" colspan="1">O</td>
+                <td class="text-left" rowspan="1" colspan="1">O</td>
+                <td class="text-left" rowspan="1" colspan="1">O</td>
+                <td class="text-left" rowspan="1" colspan="1">O</td>
+                <td class="text-left" rowspan="1" colspan="1">O</td>
+              </tr>
+            </tbody>
+          </table>
+<span id="name-tool-event-parameters-part-2"></span><table class="center" id="table-5">
+            <caption>
+<a href="#table-5" class="selfRef">Table 5</a>:
+<a href="#name-tool-event-parameters-part-2" class="selfRef">Tool Event Parameters, Part 2</a>
+            </caption>
+<thead>
+              <tr>
+                <th class="text-left" rowspan="1" colspan="1">Parameter</th>
+                <th class="text-left" rowspan="1" colspan="1">tool-failure</th>
+                <th class="text-left" rowspan="1" colspan="1">tool-error</th>
+                <th class="text-left" rowspan="1" colspan="1">tool-denied</th>
+                <th class="text-left" rowspan="1" colspan="1">tool-timeout</th>
+                <th class="text-left" rowspan="1" colspan="1">tool-cancel</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">type</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">time</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">sessions</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">party</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">operation_id</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">attempt</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+                <td class="text-left" rowspan="1" colspan="1">M</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">server</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">tool</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+                <td class="text-left" rowspan="1" colspan="1">X</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">content</td>
+                <td class="text-left" rowspan="1" colspan="1">S</td>
+                <td class="text-left" rowspan="1" colspan="1">S</td>
+                <td class="text-left" rowspan="1" colspan="1">S</td>
+                <td class="text-left" rowspan="1" colspan="1">O</td>
+                <td class="text-left" rowspan="1" colspan="1">O</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">attachment</td>
+                <td class="text-left" rowspan="1" colspan="1">O</td>
+                <td class="text-left" rowspan="1" colspan="1">O</td>
+                <td class="text-left" rowspan="1" colspan="1">O</td>
+                <td class="text-left" rowspan="1" colspan="1">O</td>
+                <td class="text-left" rowspan="1" colspan="1">O</td>
+              </tr>
+            </tbody>
+          </table>
+<p id="section-6.1.1-6">The decision, policy_life, reason and operation parameters <span class="bcp14">MUST NOT</span> be present in the tool event types.<a href="#section-6.1.1-6" class="pilcrow">¶</a></p>
+<p id="section-6.1.1-7">The content of each Event Object type is:<a href="#section-6.1.1-7" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1.1-8.1">
+              <p id="section-6.1.1-8.1.1">"policy-decision" - none, the arguments of an invocation are recorded only in its "tool-invocation" type Event Object<a href="#section-6.1.1-8.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.1-8.2">
+              <p id="section-6.1.1-8.2.1">"tool-invocation" - the arguments sent to the tool<a href="#section-6.1.1-8.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.1-8.3">
+              <p id="section-6.1.1-8.3.1">"tool-pending" - any reference to the pending operation returned by the tool (e.g. a task handle)<a href="#section-6.1.1-8.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.1-8.4">
+              <p id="section-6.1.1-8.4.1">"tool-progress" - the progress report or the partial output<a href="#section-6.1.1-8.4.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.1-8.5">
+              <p id="section-6.1.1-8.5.1">"tool-input" - the request for input<a href="#section-6.1.1-8.5.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.1-8.6">
+              <p id="section-6.1.1-8.6.1">"tool-input-response" - the input sent to the tool<a href="#section-6.1.1-8.6.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.1-8.7">
+              <p id="section-6.1.1-8.7.1">"tool-result" - the output of the tool<a href="#section-6.1.1-8.7.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.1-8.8">
+              <p id="section-6.1.1-8.8.1">"tool-failure" - the error reported by the tool<a href="#section-6.1.1-8.8.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.1-8.9">
+              <p id="section-6.1.1-8.9.1">"tool-error" - the protocol error<a href="#section-6.1.1-8.9.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.1-8.10">
+              <p id="section-6.1.1-8.10.1">"tool-denied" - the reason given by the tool for the denial (e.g. for <span>[<a href="#MCP" class="cite xref">MCP</a>]</span>, the required scopes and the error description)<a href="#section-6.1.1-8.10.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.1-8.11">
+              <p id="section-6.1.1-8.11.1">"tool-timeout" - any detail of the timeout (e.g. how long the agent waited)<a href="#section-6.1.1-8.11.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.1-8.12">
+              <p id="section-6.1.1-8.12.1">"tool-cancel" - any reason for the cancellation sent to the tool<a href="#section-6.1.1-8.12.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-6.1.1-9">As the arguments are recorded only in the "tool-invocation" type Event Object, the arguments of an invocation which is disallowed, or for which permission is not granted, are not recorded.<a href="#section-6.1.1-9" class="pilcrow">¶</a></p>
+<p id="section-6.1.1-10">TODO: whether "tool-input-response" carries the outcome of the response (e.g. accept, decline or cancel in <span>[<a href="#MCP" class="cite xref">MCP</a>]</span>) as a parameter of its own, rather than only in its content.<a href="#section-6.1.1-10" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="event-operation-id">
+<section id="section-6.1.2">
+          <h4 id="name-operation_id">
+<a href="#section-6.1.2" class="section-number selfRef">6.1.2. </a><a href="#name-operation_id" class="section-name selfRef">operation_id</a>
+          </h4>
+<p id="section-6.1.2-1">The operation_id parameter identifies the operation to which this event relates.<a href="#section-6.1.2-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1.2-2.1">
+              <p id="section-6.1.2-2.1.1">operation_id: "String"<a href="#section-6.1.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-6.1.2-3">The operation_id parameter <span class="bcp14">MUST</span> be present in the Event Object types defined in this document, other than "policy-decision" type Event Objects with the policy_life "standing", in which it <span class="bcp14">MUST NOT</span> be present.
+All of the Event Objects for an operation, across all of its attempts, <span class="bcp14">MUST</span> have the same operation_id.
+The operation_id <span class="bcp14">MUST</span> be unique among the operations in the vCon.<a href="#section-6.1.2-3" class="pilcrow">¶</a></p>
+<p id="section-6.1.2-4">The operation_id is assigned by the agent or its host, and is not the request identifier of the protocol used to perform the operation (e.g. to invoke the tool).
+The protocol request identifier may change between attempts or when a request is reissued.
+When a policy decision is made for an operation alone, the operation_id is assigned when the decision is made, before the operation is performed.
+It can then also be referenced by the permission request and response Event Objects to be defined in a future document (see <a href="#directives" class="auto internal xref">Section 7</a>).<a href="#section-6.1.2-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="event-attempt">
+<section id="section-6.1.3">
+          <h4 id="name-attempt">
+<a href="#section-6.1.3" class="section-number selfRef">6.1.3. </a><a href="#name-attempt" class="section-name selfRef">attempt</a>
+          </h4>
+<p id="section-6.1.3-1">The attempt parameter indicates the attempt of the operation to which this event relates.<a href="#section-6.1.3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1.3-2.1">
+              <p id="section-6.1.3-2.1.1">attempt: "UnsignedInt"<a href="#section-6.1.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-6.1.3-3">The attempt parameter <span class="bcp14">MUST</span> be present in the Event Object types defined in this document, other than "policy-decision" type Event Objects with the policy_life "standing", in which it <span class="bcp14">MUST NOT</span> be present.
+In a "policy-decision" type Event Object, it is the attempt which the decision precedes.
+The first attempt of an operation is 1, and each later attempt is one more than the attempt before it (see <a href="#attempts" class="auto internal xref">Section 5.1</a>).<a href="#section-6.1.3-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="event-decision">
+<section id="section-6.1.4">
+          <h4 id="name-decision">
+<a href="#section-6.1.4" class="section-number selfRef">6.1.4. </a><a href="#name-decision" class="section-name selfRef">decision</a>
+          </h4>
+<p id="section-6.1.4-1">The decision parameter indicates the outcome of a policy decision.<a href="#section-6.1.4-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1.4-2.1">
+              <p id="section-6.1.4-2.1.1">decision: "String"<a href="#section-6.1.4-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-6.1.4-3">The decision parameter <span class="bcp14">MUST</span> be present in "policy-decision" type Event Objects.
+The value <span class="bcp14">MUST</span> be one of:<a href="#section-6.1.4-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1.4-4.1">
+              <p id="section-6.1.4-4.1.1">"allowed" - no permission is needed to perform the operation<a href="#section-6.1.4-4.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.4-4.2">
+              <p id="section-6.1.4-4.2.1">"permission-required" - permission is required before the operation is performed<a href="#section-6.1.4-4.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.4-4.3">
+              <p id="section-6.1.4-4.3.1">"disallowed" - the operation is disallowed<a href="#section-6.1.4-4.3.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</section>
+</div>
+<div id="event-policy-life">
+<section id="section-6.1.5">
+          <h4 id="name-policy_life">
+<a href="#section-6.1.5" class="section-number selfRef">6.1.5. </a><a href="#name-policy_life" class="section-name selfRef">policy_life</a>
+          </h4>
+<p id="section-6.1.5-1">The policy_life parameter indicates how long a policy decision applies (see <a href="#policy-decisions" class="auto internal xref">Section 4.1</a>).<a href="#section-6.1.5-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1.5-2.1">
+              <p id="section-6.1.5-2.1.1">policy_life: "String"<a href="#section-6.1.5-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-6.1.5-3">The policy_life parameter <span class="bcp14">MUST</span> be present in "policy-decision" type Event Objects.
+The value <span class="bcp14">MUST</span> be one of:<a href="#section-6.1.5-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1.5-4.1">
+              <p id="section-6.1.5-4.1.1">"once" - the decision applies to one operation only<a href="#section-6.1.5-4.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.5-4.2">
+              <p id="section-6.1.5-4.2.1">"standing" - the decision applies to later operations until it is replaced or the vCon ends<a href="#section-6.1.5-4.2.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</section>
+</div>
+<div id="event-reason">
+<section id="section-6.1.6">
+          <h4 id="name-reason">
+<a href="#section-6.1.6" class="section-number selfRef">6.1.6. </a><a href="#name-reason" class="section-name selfRef">reason</a>
+          </h4>
+<p id="section-6.1.6-1">The reason parameter gives the reason for a policy decision (e.g. why an operation was disallowed).<a href="#section-6.1.6-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1.6-2.1">
+              <p id="section-6.1.6-2.1.1">reason: "String" (optional)<a href="#section-6.1.6-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-6.1.6-3">The reason parameter <span class="bcp14">MAY</span> be present in "policy-decision" type Event Objects.<a href="#section-6.1.6-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="event-operation">
+<section id="section-6.1.7">
+          <h4 id="name-operation">
+<a href="#section-6.1.7" class="section-number selfRef">6.1.7. </a><a href="#name-operation" class="section-name selfRef">operation</a>
+          </h4>
+<p id="section-6.1.7-1">The operation parameter indicates the kind of operation to which a policy decision applies.<a href="#section-6.1.7-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1.7-2.1">
+              <p id="section-6.1.7-2.1.1">operation: "String"<a href="#section-6.1.7-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-6.1.7-3">The operation parameter <span class="bcp14">MUST</span> be present in "policy-decision" type Event Objects.
+This document defines the value "tool-invocation", for the invocation of a tool.
+For the "tool-invocation" operation, the server and tool parameters identify the tool (see <a href="#event-server" class="auto internal xref">Section 6.1.8</a> and <a href="#event-tool" class="auto internal xref">Section 6.1.9</a>).<a href="#section-6.1.7-3" class="pilcrow">¶</a></p>
+<p id="section-6.1.7-4">TODO: other operations (e.g. access to a resource, delegation to another agent, sharing data with another agent or service, and in contact centers, recording), the parameters which identify them, and whether operation names need a registry.<a href="#section-6.1.7-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="event-server">
+<section id="section-6.1.8">
+          <h4 id="name-server">
+<a href="#section-6.1.8" class="section-number selfRef">6.1.8. </a><a href="#name-server" class="section-name selfRef">server</a>
+          </h4>
+<p id="section-6.1.8-1">The server parameter identifies the server which provides the tool.<a href="#section-6.1.8-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1.8-2.1">
+              <p id="section-6.1.8-2.1.1">server: "String"<a href="#section-6.1.8-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-6.1.8-3">The server parameter <span class="bcp14">MUST</span> be present in "tool-invocation" type Event Objects and in "policy-decision" type Event Objects for the "tool-invocation" operation.
+It <span class="bcp14">MUST NOT</span> be present in the other tool event types.
+The value is one of:<a href="#section-6.1.8-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1.8-4.1">
+              <p id="section-6.1.8-4.1.1">the URL of the server, when it has one (e.g. an <span>[<a href="#MCP" class="cite xref">MCP</a>]</span> server reached over HTTP)<a href="#section-6.1.8-4.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.8-4.2">
+              <p id="section-6.1.8-4.2.1">the name of the server, when it has no URL (e.g. for <span>[<a href="#MCP" class="cite xref">MCP</a>]</span>, the name in serverInfo of a server reached over stdio)<a href="#section-6.1.8-4.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.8-4.3">
+              <p id="section-6.1.8-4.3.1">"!host", when the tool is provided by the host<a href="#section-6.1.8-4.3.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-6.1.8-5">A server name <span class="bcp14">MUST NOT</span> start with "!", which is reserved for values defined by this document or a vCon extension.
+The "!" character is not allowed in DNS host names or IPv6 addresses, and cannot start a URL.<a href="#section-6.1.8-5" class="pilcrow">¶</a></p>
+<p id="section-6.1.8-6">A server name is not guaranteed to be unique (e.g. the name in <span>[<a href="#MCP" class="cite xref">MCP</a>]</span> serverInfo), so the URL <span class="bcp14">SHOULD</span> be used when there is one.<a href="#section-6.1.8-6" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="event-tool">
+<section id="section-6.1.9">
+          <h4 id="name-tool">
+<a href="#section-6.1.9" class="section-number selfRef">6.1.9. </a><a href="#name-tool" class="section-name selfRef">tool</a>
+          </h4>
+<p id="section-6.1.9-1">The tool parameter identifies the tool that was invoked, or to which a policy decision applies.<a href="#section-6.1.9-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1.9-2.1">
+              <p id="section-6.1.9-2.1.1">tool: "String"<a href="#section-6.1.9-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-6.1.9-3">The tool parameter <span class="bcp14">MUST</span> be present in "tool-invocation" type Event Objects, and in "policy-decision" type Event Objects for the "tool-invocation" operation with the policy_life "once".
+It <span class="bcp14">MAY</span> be present in "policy-decision" type Event Objects for the "tool-invocation" operation with the policy_life "standing", and when absent, the decision applies to all of the tools of the server.
+It <span class="bcp14">MUST NOT</span> be present in the other tool event types.
+The value is the name of the tool as known to the server (e.g. for <span>[<a href="#MCP" class="cite xref">MCP</a>]</span>, the name of the tool in the tools/call request).
+A tool name is unique within a server, so the server and tool parameters together identify the tool.<a href="#section-6.1.9-3" class="pilcrow">¶</a></p>
+<p id="section-6.1.9-4">TODO: whether a standing "policy-decision" type Event Object may name a list of tools of a server, rather than one tool or all of them.<a href="#section-6.1.9-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="event-content">
+<section id="section-6.1.10">
+          <h4 id="name-event-content">
+<a href="#section-6.1.10" class="section-number selfRef">6.1.10. </a><a href="#name-event-content" class="section-name selfRef">Event Content</a>
+          </h4>
+<p id="section-6.1.10-1">The content of a tool event type is included inline or referenced externally, in the same way as Dialog Object content in <span>[<a href="#VCON-CORE" class="cite xref">VCON-CORE</a>]</span>.<a href="#section-6.1.10-1" class="pilcrow">¶</a></p>
+<p id="section-6.1.10-2">For inline included content:<a href="#section-6.1.10-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1.10-3.1">
+              <p id="section-6.1.10-3.1.1">body: "*" (optional in a redacted vCon)<a href="#section-6.1.10-3.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.10-3.2">
+              <p id="section-6.1.10-3.2.1">encoding: "String"<a href="#section-6.1.10-3.2.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-6.1.10-4">Alternatively, for externally referenced content:<a href="#section-6.1.10-4" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1.10-5.1">
+              <p id="section-6.1.10-5.1.1">url: "String" (optional in a redacted vCon)<a href="#section-6.1.10-5.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.10-5.2">
+              <p id="section-6.1.10-5.2.1">content_hash: "ContentHash" | "ContentHash[]"<a href="#section-6.1.10-5.2.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-6.1.10-6">The media type of the content:<a href="#section-6.1.10-6" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1.10-7.1">
+              <p id="section-6.1.10-7.1.1">mediatype: "String" (required for inline content)<a href="#section-6.1.10-7.1.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-6.1.10-8">The body and url parameters <span class="bcp14">MUST NOT</span> both be present in the same Event Object.
+The mediatype parameter <span class="bcp14">MUST</span> be present for inline content, as for other inline content in <span>[<a href="#VCON-CORE" class="cite xref">VCON-CORE</a>]</span> (e.g. "application/json" for the arguments of an <span>[<a href="#MCP" class="cite xref">MCP</a>]</span> tool invocation).
+It is not required when the content is absent.<a href="#section-6.1.10-8" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="event-attachment">
+<section id="section-6.1.11">
+          <h4 id="name-attachment">
+<a href="#section-6.1.11" class="section-number selfRef">6.1.11. </a><a href="#name-attachment" class="section-name selfRef">attachment</a>
+          </h4>
+<p id="section-6.1.11-1">The attachment parameter references files which are passed to or returned by the tool.<a href="#section-6.1.11-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1.11-2.1">
+              <p id="section-6.1.11-2.1.1">attachment: "UnsignedInt" | "UnsignedInt[]" (optional)<a href="#section-6.1.11-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-6.1.11-3">The value of the attachment parameter is the index, or an array of indices, into the attachments Object array to the Attachment Objects to which this event relates.<a href="#section-6.1.11-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="directives">
+<section id="section-7">
+      <h2 id="name-requirements-for-permission">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-requirements-for-permission" class="section-name selfRef">Requirements for Permission and Directive Events</a>
+      </h2>
+<p id="section-7-1">This section is informative.<a href="#section-7-1" class="pilcrow">¶</a></p>
+<p id="section-7-2">When a policy decision requires permission, or an agent needs direction, the agent asks the person or agent on whose behalf it is acting, and they respond.
+These requests and responses are part of the conversation.
+They occur outside tool invocations as well as within them, and also in contact centers (e.g. consent to record and IVR menu choices).
+For this reason they are not defined in this document.
+Event Object types for them need to be defined in a future document.
+The following requirements have been identified so far.<a href="#section-7-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-7-3.1">
+          <p id="section-7-3.1.1">PD-1: permission requests and responses, with responses beyond yes or no (e.g. allow once, allow for the Session, always allow or a choice from a menu)<a href="#section-7-3.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-7-3.2">
+          <p id="section-7-3.2.1">PD-2: a request and its response refer to the policy decision and the operation they apply to (e.g. by operation_id)<a href="#section-7-3.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-7-3.3">
+          <p id="section-7-3.3.1">PD-3: a response given by a button press (e.g. a "keydown" type Event Object) is linked to the request it answers<a href="#section-7-3.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-7-3.4">
+          <p id="section-7-3.4.1">PD-4: a question from a tool ("tool-input") which is passed on to the person or a parent agent, and its answer, are correlated with the "tool-input"<a href="#section-7-3.4.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-7-3.5">
+          <p id="section-7-3.5.1">PD-5: step-up consent after a "tool-denied" (e.g. an <span>[<a href="#MCP" class="cite xref">MCP</a>]</span> HTTP 403 with insufficient scope) is correlated with the retried attempt<a href="#section-7-3.5.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-7-3.6">
+          <p id="section-7-3.6.1">PD-6: directive requests which are not about an operation (e.g. a clarifying choice put to a person)<a href="#section-7-3.6.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-7-3.7">
+          <p id="section-7-3.7.1">PD-7: a subagent asking its parent agent, rather than a person<a href="#section-7-3.7.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-7-3.8">
+          <p id="section-7-3.8.1">PD-8: directives no one asked for (e.g. stop, redirect, change of mode, and grant or revocation of a permission)<a href="#section-7-3.8.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-7-3.9">
+          <p id="section-7-3.9.1">PD-9: requests which end other than with an answer (withdrawn, timed out or expired, and declined versus dismissed)<a href="#section-7-3.9.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-7-3.10">
+          <p id="section-7-3.10.1">PD-10: requests passed along a chain of agents, and the answer passed back, across Sessions<a href="#section-7-3.10.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-7-3.11">
+          <p id="section-7-3.11.1">PD-11: who may answer a request, including more than one approver<a href="#section-7-3.11.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-7-3.12">
+          <p id="section-7-3.12.1">PD-12: answers given out of band (e.g. <span>[<a href="#MCP" class="cite xref">MCP</a>]</span> URL mode elicitation), where only the outcome is observed<a href="#section-7-3.12.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-7-3.13">
+          <p id="section-7-3.13.1">PD-13: the kind of answer (e.g. free text, a form with a schema, or a single or multiple choice)<a href="#section-7-3.13.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-7-3.14">
+          <p id="section-7-3.14.1">PD-14: a response or an unprompted grant which changes the policy (e.g. always allow) is linked to the standing "policy-decision" type Event Object that follows it<a href="#section-7-3.14.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-7-4">In the absence of that document, a request and its response may be recorded with the existing Objects of <span>[<a href="#VCON-CORE" class="cite xref">VCON-CORE</a>]</span>:<a href="#section-7-4" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-7-5.1">
+          <p id="section-7-5.1.1">the question and the answer as Dialog Objects<a href="#section-7-5.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-7-5.2">
+          <p id="section-7-5.2.1">a button press as a "keydown" type Event Object<a href="#section-7-5.2.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-7-6">These do not record the link to the policy decision and the operation, which is why Event Object types for requests and responses need to be defined.<a href="#section-7-6" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="compatibility-considerations">
+<section id="section-8">
+      <h2 id="name-compatibility-consideration">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-compatibility-consideration" class="section-name selfRef">Compatibility Considerations</a>
+      </h2>
+<p id="section-8-1">The Event Object types defined in this document are new values of the Event Object type parameter.
+An implementation that does not recognize this extension ignores Event Objects with a type which it does not recognize, as described in <span>[<a href="#VCON-CORE" class="cite xref">VCON-CORE</a>]</span>.
+It can still process the rest of the vCon correctly, as the Dialog, Attachment and other Objects do not depend on these Event Object types.<a href="#section-8-1" class="pilcrow">¶</a></p>
+<p id="section-8-2">The parameters defined in this document apply only to the Event Object types defined in this document, and so are ignored with them.<a href="#section-8-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="incompatibility-considerations">
+<section id="section-9">
+      <h2 id="name-incompatibility-considerati">
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-incompatibility-considerati" class="section-name selfRef">Incompatibility Considerations</a>
+      </h2>
+<p id="section-9-1">This extension introduces no incompatibilities in the processing of the conversation itself.<a href="#section-9-1" class="pilcrow">¶</a></p>
+<p id="section-9-2">TODO: the content of the tool event types may contain data that must be redacted (see <a href="#privacy-and-integrity-considerations" class="auto internal xref">Section 10</a>).
+An implementation that redacts a vCon but does not recognize this extension might copy the tool event types unchanged into the redacted vCon.
+Decide whether "tool-invocation" is therefore required in the critical parameter when tool event types with content are present, or whether <span>[<a href="#VCON-CORE" class="cite xref">VCON-CORE</a>]</span> already requires unrecognized Objects to be removed when redacting.<a href="#section-9-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="privacy-and-integrity-considerations">
+<section id="section-10">
+      <h2 id="name-privacy-and-integrity-consi">
+<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-privacy-and-integrity-consi" class="section-name selfRef">Privacy and Integrity Considerations</a>
+      </h2>
+<p id="section-10-1">The content of the tool event types can contain personally identifiable information, party identifying data, the contents of files, credentials and other secrets, and data belonging to third parties.
+The arguments of a "tool-invocation" and the output of a "tool-result" are the most likely to contain such data.
+The content of the tool event types is subject to redaction in the same way as Dialog Object content in <span>[<a href="#VCON-CORE" class="cite xref">VCON-CORE</a>]</span>.
+The body or url parameter <span class="bcp14">MAY</span> be absent in a redacted vCon.<a href="#section-10-1" class="pilcrow">¶</a></p>
+<p id="section-10-2">The tool and server parameters can themselves reveal information about the conversation (e.g. the name of a tool which accesses a medical record).
+The reason parameter of a "policy-decision" type Event Object can reveal the policy of the host, and may contain data from the conversation.<a href="#section-10-2" class="pilcrow">¶</a></p>
+<p id="section-10-3">Externally referenced content <span class="bcp14">MUST</span> have a content_hash, as for other externally referenced files in <span>[<a href="#VCON-CORE" class="cite xref">VCON-CORE</a>]</span>.<a href="#section-10-3" class="pilcrow">¶</a></p>
+<p id="section-10-4">Credentials (e.g. access tokens) used to invoke a tool <span class="bcp14">MUST NOT</span> be recorded in the Event Object types defined in this document.
+This includes the content of a "tool-denied" type Event Object.<a href="#section-10-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="security-considerations">
+<section id="section-11">
+      <h2 id="name-security-considerations">
+<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+      </h2>
+<p id="section-11-1">The security considerations of <span>[<a href="#VCON-CORE" class="cite xref">VCON-CORE</a>]</span> apply.<a href="#section-11-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-11-2.1">
+          <p id="section-11-2.1.1">The output of a tool may contain instructions intended to manipulate an agent (e.g. prompt injection).
+Such content is recorded as it was received, and implementations processing a vCon <span class="bcp14">MUST NOT</span> act on instructions in the content of the tool event types.<a href="#section-11-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-11-2.2">
+          <p id="section-11-2.2.1">TODO: other security considerations.<a href="#section-11-2.2.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+</section>
+</div>
+<div id="iana-considerations">
+<section id="section-12">
+      <h2 id="name-iana-considerations">
+<a href="#section-12" class="section-number selfRef">12. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<div id="vcon-json-registry-additions">
+<section id="section-12.1">
+        <h3 id="name-vcon-json-registry-addition">
+<a href="#section-12.1" class="section-number selfRef">12.1. </a><a href="#name-vcon-json-registry-addition" class="section-name selfRef">vCon JSON Registry Additions</a>
+        </h3>
+<div id="vcon-extensions-names-registry">
+<section id="section-12.1.1">
+          <h4 id="name-vcon-extensions-names-regis">
+<a href="#section-12.1.1" class="section-number selfRef">12.1.1. </a><a href="#name-vcon-extensions-names-regis" class="section-name selfRef">vCon Extensions Names Registry</a>
+          </h4>
+<p id="section-12.1.1-1">The following extension name is added to the vCon Extensions Names Registry.<a href="#section-12.1.1-1" class="pilcrow">¶</a></p>
+<table class="center" id="table-6">
+            <caption><a href="#table-6" class="selfRef">Table 6</a></caption>
+<thead>
+              <tr>
+                <th class="text-left" rowspan="1" colspan="1">Extension Name</th>
+                <th class="text-left" rowspan="1" colspan="1">Extension Description</th>
+                <th class="text-left" rowspan="1" colspan="1">Change Controller</th>
+                <th class="text-left" rowspan="1" colspan="1">Specification Document(s)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">tool-invocation</td>
+                <td class="text-left" rowspan="1" colspan="1">policy decision and tool invocation Event Object types</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#extension-name" class="auto internal xref">Section 3</a> RFC XXXX</td>
+              </tr>
+            </tbody>
+          </table>
+</section>
+</div>
+<div id="event-type-name-registry">
+<section id="section-12.1.2">
+          <h4 id="name-event-type-name-registry">
+<a href="#section-12.1.2" class="section-number selfRef">12.1.2. </a><a href="#name-event-type-name-registry" class="section-name selfRef">Event Type Name Registry</a>
+          </h4>
+<p id="section-12.1.2-1">The following defines additional values for the Event Type Name Registry.<a href="#section-12.1.2-1" class="pilcrow">¶</a></p>
+<table class="center" id="table-7">
+            <caption><a href="#table-7" class="selfRef">Table 7</a></caption>
+<thead>
+              <tr>
+                <th class="text-left" rowspan="1" colspan="1">Event Type Name</th>
+                <th class="text-left" rowspan="1" colspan="1">Event Type Description</th>
+                <th class="text-left" rowspan="1" colspan="1">Change Controller</th>
+                <th class="text-left" rowspan="1" colspan="1">Specification Document(s)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">policy-decision</td>
+                <td class="text-left" rowspan="1" colspan="1">operation policy decision event</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-types" class="auto internal xref">Section 6.1</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">tool-invocation</td>
+                <td class="text-left" rowspan="1" colspan="1">tool invocation request sent event</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-types" class="auto internal xref">Section 6.1</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">tool-pending</td>
+                <td class="text-left" rowspan="1" colspan="1">tool invocation pending event</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-types" class="auto internal xref">Section 6.1</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">tool-progress</td>
+                <td class="text-left" rowspan="1" colspan="1">tool invocation progress event</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-types" class="auto internal xref">Section 6.1</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">tool-input</td>
+                <td class="text-left" rowspan="1" colspan="1">tool input request event</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-types" class="auto internal xref">Section 6.1</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">tool-input-response</td>
+                <td class="text-left" rowspan="1" colspan="1">tool input response event</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-types" class="auto internal xref">Section 6.1</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">tool-result</td>
+                <td class="text-left" rowspan="1" colspan="1">tool invocation result event</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-types" class="auto internal xref">Section 6.1</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">tool-failure</td>
+                <td class="text-left" rowspan="1" colspan="1">tool reported failure event</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-types" class="auto internal xref">Section 6.1</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">tool-error</td>
+                <td class="text-left" rowspan="1" colspan="1">tool invocation protocol error event</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-types" class="auto internal xref">Section 6.1</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">tool-denied</td>
+                <td class="text-left" rowspan="1" colspan="1">tool denied invocation event</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-types" class="auto internal xref">Section 6.1</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">tool-timeout</td>
+                <td class="text-left" rowspan="1" colspan="1">tool invocation timeout event</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-types" class="auto internal xref">Section 6.1</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">tool-cancel</td>
+                <td class="text-left" rowspan="1" colspan="1">tool invocation cancel event</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-types" class="auto internal xref">Section 6.1</a> RFC XXXX</td>
+              </tr>
+            </tbody>
+          </table>
+</section>
+</div>
+<div id="event-object-parameter-names-registry">
+<section id="section-12.1.3">
+          <h4 id="name-event-object-parameter-name">
+<a href="#section-12.1.3" class="section-number selfRef">12.1.3. </a><a href="#name-event-object-parameter-name" class="section-name selfRef">Event Object Parameter Names Registry</a>
+          </h4>
+<p id="section-12.1.3-1">The following defines additional values for the Event Object Parameter Names Registry.<a href="#section-12.1.3-1" class="pilcrow">¶</a></p>
+<table class="center" id="table-8">
+            <caption><a href="#table-8" class="selfRef">Table 8</a></caption>
+<thead>
+              <tr>
+                <th class="text-left" rowspan="1" colspan="1">Parameter Name</th>
+                <th class="text-left" rowspan="1" colspan="1">Parameter Description</th>
+                <th class="text-left" rowspan="1" colspan="1">Change Controller</th>
+                <th class="text-left" rowspan="1" colspan="1">Specification Document(s)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">operation_id</td>
+                <td class="text-left" rowspan="1" colspan="1">operation identifier</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-operation-id" class="auto internal xref">Section 6.1.2</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">attempt</td>
+                <td class="text-left" rowspan="1" colspan="1">operation attempt number</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-attempt" class="auto internal xref">Section 6.1.3</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">decision</td>
+                <td class="text-left" rowspan="1" colspan="1">policy decision outcome</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-decision" class="auto internal xref">Section 6.1.4</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">policy_life</td>
+                <td class="text-left" rowspan="1" colspan="1">policy decision life</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-policy-life" class="auto internal xref">Section 6.1.5</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">reason</td>
+                <td class="text-left" rowspan="1" colspan="1">policy decision reason</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-reason" class="auto internal xref">Section 6.1.6</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">operation</td>
+                <td class="text-left" rowspan="1" colspan="1">kind of operation of a policy decision</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-operation" class="auto internal xref">Section 6.1.7</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">server</td>
+                <td class="text-left" rowspan="1" colspan="1">tool server URL or name</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-server" class="auto internal xref">Section 6.1.8</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">tool</td>
+                <td class="text-left" rowspan="1" colspan="1">tool name</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-tool" class="auto internal xref">Section 6.1.9</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">body</td>
+                <td class="text-left" rowspan="1" colspan="1">inline tool event content</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-content" class="auto internal xref">Section 6.1.10</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">encoding</td>
+                <td class="text-left" rowspan="1" colspan="1">inline tool event content encoding</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-content" class="auto internal xref">Section 6.1.10</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">url</td>
+                <td class="text-left" rowspan="1" colspan="1">externally referenced tool event content</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-content" class="auto internal xref">Section 6.1.10</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">content_hash</td>
+                <td class="text-left" rowspan="1" colspan="1">externally referenced tool event content hash</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-content" class="auto internal xref">Section 6.1.10</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">mediatype</td>
+                <td class="text-left" rowspan="1" colspan="1">tool event content media type</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-content" class="auto internal xref">Section 6.1.10</a> RFC XXXX</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">attachment</td>
+                <td class="text-left" rowspan="1" colspan="1">tool event attachment index or indices</td>
+                <td class="text-left" rowspan="1" colspan="1">IESG</td>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <a href="#event-attachment" class="auto internal xref">Section 6.1.11</a> RFC XXXX</td>
+              </tr>
+            </tbody>
+          </table>
+</section>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="sec-combined-references">
+<section id="section-13">
+      <h2 id="name-references">
+<a href="#section-13" class="section-number selfRef">13. </a><a href="#name-references" class="section-name selfRef">References</a>
+      </h2>
+<div id="sec-normative-references">
+<section id="section-13.1">
+        <h3 id="name-normative-references">
+<a href="#section-13.1" class="section-number selfRef">13.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+        </h3>
+<dl class="references">
+<dt id="JSON">[JSON]</dt>
+        <dd>
+<span class="refAuthor">Bray, T., Ed.</span>, <span class="refTitle">"The JavaScript Object Notation (JSON) Data Interchange Format"</span>, <span class="seriesInfo">STD 90</span>, <span class="seriesInfo">RFC 8259</span>, <span class="seriesInfo">DOI 10.17487/RFC8259</span>, <time datetime="2017-12" class="refDate">December 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8259">https://www.rfc-editor.org/rfc/rfc8259</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC2119">[RFC2119]</dt>
+        <dd>
+<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8174">[RFC8174]</dt>
+        <dd>
+<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8174">https://www.rfc-editor.org/rfc/rfc8174</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="VCON-CORE">[VCON-CORE]</dt>
+      <dd>
+<span class="refAuthor">Petrie, D.</span>, <span class="refTitle">"The JSON format for vCon - Conversation Data Container"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-vcon-vcon-core-05</span>, <time datetime="2026-10-31" class="refDate">31 October 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-vcon-vcon-core-05">https://datatracker.ietf.org/doc/html/draft-ietf-vcon-vcon-core-05</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="sec-informative-references">
+<section id="section-13.2">
+        <h3 id="name-informative-references">
+<a href="#section-13.2" class="section-number selfRef">13.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+        </h3>
+<dl class="references">
+<dt id="AUDIT-ARCH">[AUDIT-ARCH]</dt>
+        <dd>
+<span class="refAuthor">Kühlewind, M.</span> and <span class="refAuthor">H. Birkholz</span>, <span class="refTitle">"An Architecture for Auditing Agent Delegation and Interactions"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-kuehlewind-audit-architecture-01</span>, <time datetime="2026-09-07" class="refDate">7 September 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-kuehlewind-audit-architecture-01">https://datatracker.ietf.org/doc/html/draft-kuehlewind-audit-architecture-01</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="CDDL">[CDDL]</dt>
+        <dd>
+<span class="refAuthor">Birkholz, H.</span>, <span class="refAuthor">Vigano, C.</span>, and <span class="refAuthor">C. Bormann</span>, <span class="refTitle">"Concise Data Definition Language (CDDL): A Notational Convention to Express Concise Binary Object Representation (CBOR) and JSON Data Structures"</span>, <span class="seriesInfo">RFC 8610</span>, <span class="seriesInfo">DOI 10.17487/RFC8610</span>, <time datetime="2019-06" class="refDate">June 2019</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8610">https://www.rfc-editor.org/rfc/rfc8610</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="MCP">[MCP]</dt>
+        <dd>
+<span class="refTitle">"Model Context Protocol Specification"</span>, <span>n.d.</span>, <span>&lt;<a href="https://modelcontextprotocol.io/specification/">https://modelcontextprotocol.io/specification/</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="MCP-2025-11-25">[MCP-2025-11-25]</dt>
+        <dd>
+<span class="refTitle">"Model Context Protocol Specification, Revision 2025-11-25"</span>, <span>n.d.</span>, <span>&lt;<a href="https://modelcontextprotocol.io/specification/2025-11-25">https://modelcontextprotocol.io/specification/2025-11-25</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="MCP-2026-07-28">[MCP-2026-07-28]</dt>
+        <dd>
+<span class="refTitle">"Model Context Protocol Specification, Revision 2026-07-28"</span>, <span>n.d.</span>, <span>&lt;<a href="https://modelcontextprotocol.io/specification/2026-07-28">https://modelcontextprotocol.io/specification/2026-07-28</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="ROADMAP">[ROADMAP]</dt>
+      <dd>
+<span class="refTitle">"*** BROKEN REFERENCE ***"</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+</section>
+</div>
+<div id="mapping-to-mcp">
+<section id="appendix-A">
+      <h2 id="name-mapping-to-mcp">
+<a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-mapping-to-mcp" class="section-name selfRef">Mapping to MCP</a>
+      </h2>
+<p id="appendix-A-1">This appendix describes how the Event Object types defined in this document map to the messages of <span>[<a href="#MCP" class="cite xref">MCP</a>]</span>.
+The mapping is informative.
+It is given for two revisions, <span>[<a href="#MCP-2025-11-25" class="cite xref">MCP-2025-11-25</a>]</span> and <span>[<a href="#MCP-2026-07-28" class="cite xref">MCP-2026-07-28</a>]</span>, as the later revision changes how input, pending operations and retries are handled.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<span id="name-mapping-of-event-object-typ"></span><table class="center" id="table-9">
+        <caption>
+<a href="#table-9" class="selfRef">Table 9</a>:
+<a href="#name-mapping-of-event-object-typ" class="selfRef">Mapping of Event Object Types to MCP</a>
+        </caption>
+<thead>
+          <tr>
+            <th class="text-left" rowspan="1" colspan="1">Event Object Type</th>
+            <th class="text-left" rowspan="1" colspan="1">MCP Revision 2025-11-25</th>
+            <th class="text-left" rowspan="1" colspan="1">MCP Revision 2026-07-28</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">policy-decision</td>
+            <td class="text-left" rowspan="1" colspan="1">no message; the host applies its policy</td>
+            <td class="text-left" rowspan="1" colspan="1">no message; the host applies its policy</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">tool-invocation</td>
+            <td class="text-left" rowspan="1" colspan="1">tools/call request</td>
+            <td class="text-left" rowspan="1" colspan="1">tools/call request</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">tool-pending</td>
+            <td class="text-left" rowspan="1" colspan="1">task-augmented response to tools/call</td>
+            <td class="text-left" rowspan="1" colspan="1">task handle returned by the tasks extension (io.modelcontextprotocol/tasks)</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">tool-progress</td>
+            <td class="text-left" rowspan="1" colspan="1">notifications/progress</td>
+            <td class="text-left" rowspan="1" colspan="1">notifications/progress on the response stream of the request</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">tool-input</td>
+            <td class="text-left" rowspan="1" colspan="1">elicitation/create request from the server; for a task, task status input_required</td>
+            <td class="text-left" rowspan="1" colspan="1">result with resultType "input_required"; for a task, task status input_required</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">tool-input-response</td>
+            <td class="text-left" rowspan="1" colspan="1">response to elicitation/create</td>
+            <td class="text-left" rowspan="1" colspan="1">inputResponses in a retry of the original request; for a task, inputResponses in tasks/update</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">tool-result</td>
+            <td class="text-left" rowspan="1" colspan="1">tools/call result with isError absent or false</td>
+            <td class="text-left" rowspan="1" colspan="1">tools/call result with isError absent or false</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">tool-failure</td>
+            <td class="text-left" rowspan="1" colspan="1">tools/call result with isError true</td>
+            <td class="text-left" rowspan="1" colspan="1">tools/call result with isError true</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">tool-error</td>
+            <td class="text-left" rowspan="1" colspan="1">JSON-RPC error response</td>
+            <td class="text-left" rowspan="1" colspan="1">JSON-RPC error response</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">tool-denied</td>
+            <td class="text-left" rowspan="1" colspan="1">HTTP 401 or 403 response (HTTP transports only)</td>
+            <td class="text-left" rowspan="1" colspan="1">HTTP 401 or 403 response (HTTP transports only)</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">tool-timeout</td>
+            <td class="text-left" rowspan="1" colspan="1">no message; the client stops waiting</td>
+            <td class="text-left" rowspan="1" colspan="1">no message; the client stops waiting</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">tool-cancel</td>
+            <td class="text-left" rowspan="1" colspan="1">notifications/cancelled</td>
+            <td class="text-left" rowspan="1" colspan="1">notifications/cancelled; for a task, tasks/cancel</td>
+          </tr>
+        </tbody>
+      </table>
+<p id="appendix-A-3">Notes:<a href="#appendix-A-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="appendix-A-4.1">
+          <p id="appendix-A-4.1.1">The operation_id is not the JSON-RPC request id, which changes when a request is reissued.<a href="#appendix-A-4.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-A-4.2">
+          <p id="appendix-A-4.2.1">The server parameter is the URL of a server reached over HTTP, or the name in serverInfo of a server reached over stdio.
+<span>[<a href="#MCP" class="cite xref">MCP</a>]</span> tool names are unique within a server, and <span>[<a href="#MCP" class="cite xref">MCP</a>]</span> says the serverInfo name is not guaranteed to be unique.<a href="#appendix-A-4.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-A-4.3">
+          <p id="appendix-A-4.3.1">In <span>[<a href="#MCP-2026-07-28" class="cite xref">MCP-2026-07-28</a>]</span>, input is supplied by retrying the original request.
+TODO: decide whether that retry is a new attempt, with a "tool-invocation" type Event Object, or only a "tool-input-response" type Event Object in the same attempt.<a href="#appendix-A-4.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-A-4.4">
+          <p id="appendix-A-4.4.1">A tool reached over the stdio transport has no HTTP response, so a refusal by it is reported as a tool execution error and recorded as "tool-failure".<a href="#appendix-A-4.4.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-A-4.5">
+          <p id="appendix-A-4.5.1">After an HTTP 403 with insufficient scope, a client acting for a user may obtain a token with more scope and retry the request.
+The retry is a new attempt of the same invocation (see <a href="#attempts" class="auto internal xref">Section 5.1</a>).
+The consent of the user is a permission request (see PD-5 in <a href="#directives" class="auto internal xref">Section 7</a>).<a href="#appendix-A-4.5.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-A-4.6">
+          <p id="appendix-A-4.6.1">In <span>[<a href="#MCP-2026-07-28" class="cite xref">MCP-2026-07-28</a>]</span>, notifications/cancelled <span class="bcp14">MUST NOT</span> be used to cancel a task, which is cancelled with tasks/cancel.
+Cancellation of a task is cooperative, and the task may still end with another status.<a href="#appendix-A-4.6.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-A-4.7">
+          <p id="appendix-A-4.7.1">A sampling/createMessage request from the server, which is deprecated in <span>[<a href="#MCP-2026-07-28" class="cite xref">MCP-2026-07-28</a>]</span>, is not supported by this document.<a href="#appendix-A-4.7.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+</section>
+</div>
+<div id="example-vcons">
+<section id="appendix-B">
+      <h2 id="name-example-vcons">
+<a href="#appendix-B" class="section-number selfRef">Appendix B. </a><a href="#name-example-vcons" class="section-name selfRef">Example vCons</a>
+      </h2>
+<p id="appendix-B-1">TODO<a href="#appendix-B-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="json-schema-for-the-tool-invocation-extension">
+<section id="appendix-C">
+      <h2 id="name-json-schema-for-the-tool-in">
+<a href="#appendix-C" class="section-number selfRef">Appendix C. </a><a href="#name-json-schema-for-the-tool-in" class="section-name selfRef">JSON Schema for the tool-invocation Extension</a>
+      </h2>
+<p id="appendix-C-1">This appendix provides a JSON schema for the parameters defined by the tool-invocation extension.
+The text in the preceding sections of this document defines the normative definition of these parameters.
+If the JSON schema provided below differs from that in the text of the preceding sections, the text is the definitive definition and the JSON schema below is to be considered incorrect.<a href="#appendix-C-1" class="pilcrow">¶</a></p>
+<p id="appendix-C-2">This schema supplements, and does not replace, the core vCon JSON schema.
+To fully validate a vCon that uses this extension, apply both the core vCon schema and this schema to the vCon.<a href="#appendix-C-2" class="pilcrow">¶</a></p>
+<p id="appendix-C-3">The JSON schema definition below has been formatted with line breaks to print nicely on the page.
+The unformatted version of the JSON schema can be downloaded from:
+https://raw.githubusercontent.com/dgpetrie/draft-petrie-vcon-tool-invocation/refs/heads/main/tool_invocation_json_schema.json<a href="#appendix-C-3" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-C-4">
+<pre>
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://ietf.org/vcon/schemas/tool-invocation-extension
+    .json",
+  "title": "vCon Tool Invocation (tool-invocation) Extension",
+  "description": "Supplemental JSON schema for the Event Object t
+    ypes and parameters defined by the vCon tool-invocation exten
+    sion, RFCXXXX. This schema is applied in addition to the core
+     vCon schema; it constrains only the Event Object types and p
+    arameters added by this extension and leaves all other parame
+    ters to the core schema. The text of this document is normati
+    ve; this schema is informational.",
+  "type": "object",
+  "properties": {
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/EventToolInvocationExtension"
+      }
+    }
+  },
+  "definitions": {
+    "EventToolInvocationExtension": {
+      "type": "object",
+      "description": "Event Object types and parameters added to
+        the core Event Object by the tool-invocation extension",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "policy-decision, tool-invocation, tool-
+            pending, tool-progress, tool-input, tool-input-respon
+            se, tool-result, tool-failure, tool-error, tool-denie
+            d, tool-timeout or tool-cancel, in addition to the co
+            re Event Object types"
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "allowed",
+            "permission-required",
+            "disallowed"
+          ],
+          "description": "Outcome of a policy decision (policy-de
+            cision only)"
+        },
+        "policy_life": {
+          "type": "string",
+          "enum": [
+            "once",
+            "standing"
+          ],
+          "description": "Whether a policy decision applies to on
+            e operation only or is standing (policy-decision only
+            )"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Reason for a policy decision (policy-de
+            cision only)"
+        },
+        "operation": {
+          "type": "string",
+          "description": "Kind of operation to which a policy dec
+            ision applies; this document defines tool-invocation
+            (policy-decision only)"
+        },
+        "operation_id": {
+          "type": "string",
+          "description": "Identifier of the operation; the same f
+            or all Event Objects of an operation, across all of i
+            ts attempts; not present in standing policy decisions
+            "
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Attempt of the operation, starting at 1
+            ; not present in standing policy decisions"
+        },
+        "server": {
+          "type": "string",
+          "description": "URL of the server which provides the to
+            ol, otherwise its name, or !host for a tool provided
+            by the host (policy-decision and tool-invocation only
+            )"
+        },
+        "tool": {
+          "type": "string",
+          "description": "Name of the tool as known to the server
+             (policy-decision and tool-invocation only); absent i
+            n a standing policy decision for all of the tools of
+            the server"
+        },
+        "mediatype": {
+          "type": "string",
+          "description": "Media type of the content of a tool eve
+            nt type; MUST be present for inline content"
+        },
+        "encoding": {
+          "type": "string",
+          "description": "Encoding of the inline content of a too
+            l event type: json, none or base64url"
+        },
+        "body": {
+          "description": "Inline content of a tool event type; an
+            y JSON value when encoding is json, otherwise a strin
+            g"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL of the externally referenced conten
+            t of a tool event type"
+        },
+        "content_hash": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-z0-9]+-[A-Za-z0-9_-]+$"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+-[A-Za-z0-9_-]+$"
+              }
+            }
+          ],
+          "description": "Hash of the externally referenced conte
+            nt of a tool event type"
+        },
+        "attachment": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          ],
+          "description": "Index or indices of the Attachment Obje
+            cts passed to or returned by the tool (tool event typ
+            es only)"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "policy-decision"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "sessions",
+              "party",
+              "decision",
+              "policy_life",
+              "operation",
+              "server"
+            ],
+            "allOf": [
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "mediatype"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "encoding"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "body"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "url"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "content_hash"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "attachment"
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "policy_life": {
+                      "const": "once"
+                    }
+                  },
+                  "required": [
+                    "policy_life"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "operation_id",
+                    "attempt",
+                    "tool"
+                  ]
+                },
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": [
+                          "operation_id"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "attempt"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "tool-invocation",
+                  "tool-pending",
+                  "tool-progress",
+                  "tool-input",
+                  "tool-input-response",
+                  "tool-result",
+                  "tool-failure",
+                  "tool-error",
+                  "tool-denied",
+                  "tool-timeout",
+                  "tool-cancel"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "sessions",
+              "party",
+              "operation_id",
+              "attempt"
+            ],
+            "allOf": [
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "decision"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "policy_life"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "reason"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "operation"
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "body": {}
+                  },
+                  "required": [
+                    "body"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "encoding"
+                  ],
+                  "not": {
+                    "required": [
+                      "url"
+                    ]
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "url"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "content_hash"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "tool-invocation"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "server",
+              "tool"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "tool-pending",
+                  "tool-progress",
+                  "tool-input",
+                  "tool-input-response",
+                  "tool-result",
+                  "tool-failure",
+                  "tool-error",
+                  "tool-denied",
+                  "tool-timeout",
+                  "tool-cancel"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "server"
+                  ]
+                },
+                {
+                  "required": [
+                    "tool"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+</pre><a href="#appendix-C-4" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="cddl-for-the-tool-invocation-extension">
+<section id="appendix-D">
+      <h2 id="name-cddl-for-the-tool-invocatio">
+<a href="#appendix-D" class="section-number selfRef">Appendix D. </a><a href="#name-cddl-for-the-tool-invocatio" class="section-name selfRef">CDDL for the tool-invocation Extension</a>
+      </h2>
+<p id="appendix-D-1">This appendix provides a <span>[<a href="#CDDL" class="cite xref">CDDL</a>]</span> definition for the parameters defined by the tool-invocation extension.
+The text in the preceding sections of this document defines the normative definition of these parameters.
+If the CDDL provided below differs from that in the text of the preceding sections, the text is the definitive definition and the CDDL below is to be considered incorrect.<a href="#appendix-D-1" class="pilcrow">¶</a></p>
+<p id="appendix-D-2">This CDDL is used together with the core vCon CDDL in <span>[<a href="#VCON-CORE" class="cite xref">VCON-CORE</a>]</span>.
+It adds Event Object types through the event-type-ext socket of the core CDDL, and needs no other core socket.
+Each Event Object type it defines ends with a socket of its own, so that another vCon extension can add parameters to it.<a href="#appendix-D-2" class="pilcrow">¶</a></p>
+<p id="appendix-D-3">The unformatted version of the CDDL can be downloaded from:
+https://raw.githubusercontent.com/dgpetrie/draft-petrie-vcon-tool-invocation/refs/heads/main/tool_invocation.cddl<a href="#appendix-D-3" class="pilcrow">¶</a></p>
+<div class="breakable lang-cddl sourcecode" id="appendix-D-4">
+<pre>
+; CDDL for the tool-invocation vCon extension
+; (draft-petrie-vcon-tool-invocation).
+; The prose of the draft is normative.
+; This CDDL is informative.
+; Constraints that cannot be expressed in CDDL are stated in
+; comments.
+;
+; This CDDL is used together with the core vCon CDDL
+; (draft-ietf-vcon-vcon-core, syntax version 0.5.0).
+; It adds Event Object types through the event-type-ext socket of
+; the core CDDL, and uses no other core socket.
+; It uses these rules of the core CDDL: date_type,
+; session_index_or_list_type, party_index_type,
+; attachment_index_or_list_type, media_type_value_type and
+; file_content_type.
+;
+; Each Event Object type defined here ends with a socket of its
+; own, so that another vCon extension can add parameters to it.
+; A policy decision for another kind of operation is added by
+; another vCon extension, as a group of its own with the type
+; "policy-decision" and its own operation value, through the
+; event-type-ext socket.
+;
+; Not enforced by this CDDL:
+; - A vCon which contains these Event Object types SHOULD list
+;   "tool-invocation" in its extensions parameter.
+; - operation_id MUST be unique among the operations in the vCon,
+;   and all of the Event Objects of an operation, across all of
+;   its attempts, MUST have the same operation_id.
+; - Each later attempt of an operation is one more than the
+;   attempt before it.
+; - mediatype MUST be present for inline content.
+
+$$event-type-ext //= ( event_policy_decision_once_type )
+$$event-type-ext //= ( event_policy_decision_standing_type )
+$$event-type-ext //= ( event_tool_invocation_type )
+$$event-type-ext //= ( event_tool_response_type )
+
+; Parameters common to the Event Object types of this extension
+; party references the agent, also in the Event Objects for
+; policy decisions and for responses from the tool.
+event_ti_common_type = (
+    "time": date_type,
+    sessions: session_index_or_list_type,
+    party: party_index_type
+  )
+
+; Policy decision event type
+policy_decision_value_type = "allowed" / "permission-required" /
+    "disallowed"
+
+; Parameters common to the policy-decision type
+policy_decision_common_type = (
+    type: "policy-decision",
+    event_ti_common_type,
+    decision: policy_decision_value_type,
+    ? reason: tstr
+  )
+
+; A decision for one tool invocation
+event_policy_decision_once_type = (
+    policy_decision_common_type,
+    operation: "tool-invocation",
+    policy_life: "once",
+    operation_id: tstr,
+    attempt: attempt_value_type,
+    tool_identity_type,
+    * $$event-policy-decision-ext
+  )
+
+; A standing decision for one tool, or for all of the tools of a
+; server when tool is absent
+; Not enforced by this CDDL:
+; - A standing decision applies until a later policy-decision type
+;   Event Object for the same operation and target replaces it, or
+;   until the end of the vCon.
+event_policy_decision_standing_type = (
+    policy_decision_common_type,
+    operation: "tool-invocation",
+    policy_life: "standing",
+    server: server_value_type,
+    ? tool: tstr,
+    * $$event-policy-decision-ext
+  )
+
+; The server and the tool together identify a tool.
+tool_identity_type = (
+    server: server_value_type,
+    tool: tstr
+  )
+
+; The URL of the server when it has one, otherwise the name of the
+; server, or "!host" for a tool provided by the host.
+; Not enforced by this CDDL:
+; - A server name MUST NOT start with "!".
+server_value_type = tstr
+
+; Parameters common to the tool event types
+event_tool_common_type = (
+    event_ti_common_type,
+    operation_id: tstr,
+    attempt: attempt_value_type
+  )
+
+; Content of a tool event type, inline or externally referenced
+; as for Dialog Content in the core CDDL.
+; Not enforced by this CDDL:
+; - Content SHOULD be present in the tool event types, other than
+;   tool-pending, tool-timeout and tool-cancel, in which it is
+;   optional (see Event Object Parameter Applicability by Type).
+event_tool_content_type = (
+    ? mediatype: media_type_value_type,
+    file_content_type
+  )
+
+; Tool invocation event type
+; The content is the arguments sent to the tool.
+event_tool_invocation_type = (
+    type: "tool-invocation",
+    event_tool_common_type,
+    tool_identity_type,
+    ? event_tool_content_type,
+    ? attachment: attachment_index_or_list_type,
+    * $$event-tool-invocation-ext
+  )
+
+; Event types for the responses from the tool, and for the input,
+; timeout and cancellation of the agent
+; Not enforced by this CDDL:
+; - tool-denied is used only when the response from the tool is
+;   identified by the protocol as a denial.
+event_tool_response_type = (
+    type: "tool-pending" / "tool-progress" / "tool-input" /
+      "tool-input-response" / "tool-result" / "tool-failure" /
+      "tool-error" / "tool-denied" / "tool-timeout" /
+      "tool-cancel",
+    event_tool_common_type,
+    ? event_tool_content_type,
+    ? attachment: attachment_index_or_list_type,
+    * $$event-tool-ext
+  )
+
+; The first attempt of an operation is 1.
+attempt_value_type = uint .ge 1
+</pre><a href="#appendix-D-4" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="acknowledgments">
+<section id="appendix-E">
+      <h2 id="name-acknowledgments">
+<a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
+    </h2>
+</section>
+</div>
+<div id="authors-addresses">
+<section id="appendix-F">
+      <h2 id="name-authors-address">
+<a href="#name-authors-address" class="section-name selfRef">Author's Address</a>
+      </h2>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Daniel G Petrie</span></div>
+<div dir="auto" class="left"><span class="org">SIPez LLC</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:dan.ietf@sipez.com" class="email">dan.ietf@sipez.com</a>
+</div>
+</address>
+</section>
+</div>
+<script>const toc = document.getElementById("toc");
+toc.querySelector("h2").addEventListener("click", e => {
+  toc.classList.toggle("active");
+});
+toc.querySelector("nav").addEventListener("click", e => {
+  toc.classList.remove("active");
+});
+</script>
+</body>
+</html>
